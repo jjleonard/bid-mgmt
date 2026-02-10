@@ -142,6 +142,8 @@ export default async function BidDetailsPage({ params }: PageProps) {
       const auditEvent = await auditClient.auditEvent.create({
         data: {
           bidId: id,
+          bidIdSnapshot: id,
+          bidLabel: `${clientName} · ${bidName}`,
         },
       });
 
@@ -156,6 +158,78 @@ export default async function BidDetailsPage({ params }: PageProps) {
     });
 
     redirect(`/bids/${id}`);
+  }
+
+  async function deleteBid(formData: FormData) {
+    "use server";
+
+    const id = String(formData.get("id") ?? "");
+
+    if (!id) {
+      throw new Error("Missing bid id.");
+    }
+
+    const currentBid = await prisma.bid.findUnique({
+      where: { id },
+    });
+
+    if (!currentBid) {
+      notFound();
+    }
+
+    const changes = [
+      {
+        field: "clientName",
+        fromValue: currentBid.clientName,
+        toValue: "[deleted]",
+      },
+      {
+        field: "bidName",
+        fromValue: currentBid.bidName,
+        toValue: "[deleted]",
+      },
+      {
+        field: "status",
+        fromValue: currentBid.status,
+        toValue: "[deleted]",
+      },
+      {
+        field: "folderUrl",
+        fromValue: currentBid.folderUrl,
+        toValue: "[deleted]",
+      },
+    ];
+
+    await prisma.$transaction(async (tx) => {
+      const auditClient = tx as unknown as {
+        auditEvent: { create: (args: object) => Promise<{ id: string }> };
+        auditChange: { createMany: (args: object) => Promise<unknown> };
+      };
+
+      const auditEvent = await auditClient.auditEvent.create({
+        data: {
+          bidId: id,
+          bidIdSnapshot: id,
+          bidLabel: `${currentBid.clientName} · ${currentBid.bidName}`,
+          action: "delete",
+        },
+      });
+
+      await auditClient.auditChange.createMany({
+        data: changes.map((change) => ({
+          eventId: auditEvent.id,
+          field: change.field,
+          fromValue: change.fromValue,
+          toValue: change.toValue,
+        })),
+      });
+
+      await tx.bid.delete({
+        where: { id },
+      });
+    });
+
+    redirect("/bids");
   }
 
   return (
@@ -183,6 +257,7 @@ export default async function BidDetailsPage({ params }: PageProps) {
             folderUrl: bid.folderUrl,
           }}
           onSave={updateBid}
+          onDelete={deleteBid}
         />
 
         <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">

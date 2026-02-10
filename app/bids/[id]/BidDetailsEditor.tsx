@@ -14,10 +14,16 @@ type BidDetails = {
 type BidDetailsEditorProps = {
   bid: BidDetails;
   onSave: (formData: FormData) => Promise<void>;
+  onDelete: (formData: FormData) => Promise<void>;
 };
 
-export default function BidDetailsEditor({ bid, onSave }: BidDetailsEditorProps) {
+export default function BidDetailsEditor({
+  bid,
+  onSave,
+  onDelete,
+}: BidDetailsEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   if (!isEditing) {
     return (
@@ -151,6 +157,40 @@ export default function BidDetailsEditor({ bid, onSave }: BidDetailsEditorProps)
           </button>
         </div>
       </form>
+
+      <div className="mt-6 flex items-center justify-between gap-4 border-t border-sand-200 pt-6">
+        {isConfirmingDelete ? (
+          <div className="flex flex-wrap items-center gap-3 text-xs text-ink-600">
+            <span className="uppercase tracking-[0.2em] text-ink-500">
+              Confirm delete?
+            </span>
+            <form action={onDelete}>
+              <input type="hidden" name="id" value={bid.id} />
+              <button
+                type="submit"
+                className="inline-flex h-9 items-center justify-center rounded-full border border-red-200 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-red-700 transition hover:border-red-400"
+              >
+                Delete
+              </button>
+            </form>
+            <button
+              type="button"
+              onClick={() => setIsConfirmingDelete(false)}
+              className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500 transition hover:text-ink-700"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsConfirmingDelete(true)}
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500 transition hover:text-ink-700"
+          >
+            Delete bid
+          </button>
+        )}
+      </div>
     </section>
   );
 }

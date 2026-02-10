@@ -17,6 +17,9 @@
 - Added dark mode palette tokens and data-theme based styling.
 - Refined bid list headers to small-caps styling and added zebra striping for rows.
 - Slowed the background color transition and removed heading transitions.
+- Added a client-name search filter on the bids list.
+- Added edit and delete flows on bid detail pages with inline confirmation.
+- Added audit trail snapshots to preserve context after deletions.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.

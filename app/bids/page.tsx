@@ -2,6 +2,7 @@ import { bidStatusOptions, bidStatusValues } from "@/lib/bids";
 import { prisma } from "@/lib/prisma";
 import ClientSort from "@/app/bids/ClientSort";
 import StatusFilter from "@/app/bids/StatusFilter";
+import SearchFilter from "@/app/bids/SearchFilter";
 import ThemeToggle from "@/app/ThemeToggle";
 
 export const dynamic = "force-dynamic";
@@ -10,8 +11,18 @@ export const fetchCache = "force-no-store";
 
 type PageProps = {
   searchParams?:
-    | { status?: string | string[]; sort?: string | string[]; dir?: string | string[] }
-    | Promise<{ status?: string | string[]; sort?: string | string[]; dir?: string | string[] }>;
+    | {
+        status?: string | string[];
+        sort?: string | string[];
+        dir?: string | string[];
+        q?: string | string[];
+      }
+    | Promise<{
+        status?: string | string[];
+        sort?: string | string[];
+        dir?: string | string[];
+        q?: string | string[];
+      }>;
 };
 
 type BidRow = {
@@ -26,6 +37,8 @@ export default async function BidsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await Promise.resolve(searchParams);
   const rawStatus = resolvedSearchParams?.status;
   const statusFilter = Array.isArray(rawStatus) ? rawStatus[0] : rawStatus;
+  const rawQuery = resolvedSearchParams?.q;
+  const searchQuery = (Array.isArray(rawQuery) ? rawQuery[0] : rawQuery)?.trim();
   const rawSort = resolvedSearchParams?.sort;
   const rawDir = resolvedSearchParams?.dir;
   const sortKey = Array.isArray(rawSort) ? rawSort[0] : rawSort;
@@ -41,10 +54,21 @@ export default async function BidsPage({ searchParams }: PageProps) {
 
   const bids = (await prisma.bid.findMany({
     where:
-      selectedStatus === "all"
+      selectedStatus === "all" && !searchQuery
         ? undefined
         : {
-            status: selectedStatus,
+            ...(selectedStatus === "all"
+              ? {}
+              : {
+                  status: selectedStatus,
+                }),
+            ...(searchQuery
+              ? {
+                  clientName: {
+                    contains: searchQuery,
+                  },
+                }
+              : {}),
           },
     orderBy: isClientSort
       ? [{ clientName: clientSortDirection }, { createdAt: "desc" }]
@@ -77,6 +101,7 @@ export default async function BidsPage({ searchParams }: PageProps) {
 
         <section className="rounded-2xl border border-sand-200 bg-white/80 p-6 shadow-sm">
           <div className="flex flex-wrap items-end gap-4">
+            <SearchFilter initialValue={searchQuery ?? ""} />
             <StatusFilter
               options={bidStatusOptions}
               selected={selectedStatus}
@@ -102,7 +127,9 @@ export default async function BidsPage({ searchParams }: PageProps) {
           <div className="divide-y divide-sand-200">
             {bids.length === 0 ? (
               <div className="px-6 py-10 text-sm text-ink-600">
-                No bids yet. Add the first one to get started.
+                {searchQuery
+                  ? `No bids match "${searchQuery}".`
+                  : "No bids yet. Add the first one to get started."}
               </div>
             ) : (
               bids.map((bid, index) => (

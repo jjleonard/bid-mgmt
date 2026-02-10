@@ -14,9 +14,11 @@
 - Database connection is centralized to avoid duplicate clients in dev.
 - Styling uses a small, neutral token set for visual consistency.
 - Theme preference is stored in localStorage and applied at boot to avoid flashes.
+- Audit events store bid snapshots so history remains readable after deletions.
 
 ## Current State Snapshot
 - Bid list supports status filtering, client-name sorting, and deep links to details.
+- Bid list supports client-name search via `q` query param.
 - UI includes a per-page theme toggle and subtle zebra striping for scanability.
 - CSV admin import validates and inserts valid rows, skipping invalid entries.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
@@ -48,7 +50,9 @@
 - The server action validates inputs and creates a `Bid` record.
 - On success, the user is redirected to `/bids`.
 - `/bids` fetches the latest bids on the server and supports filtering by status via query string.
+- `/bids` also supports client search via `q`, with filters reset on search submit.
 - Theme is set via `data-theme` tokens and can be toggled on any page header.
+- Deleting a bid logs a `delete` audit event and preserves snapshots of bid identity.
 - `/bids/[id]` fetches a single bid by id.
 - `/bids/admin` uploads a CSV, validates rows, inserts valid bids, and reports counts.
 

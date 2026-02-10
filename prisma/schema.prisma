@@ -19,11 +19,13 @@ model Bid {
 
 model AuditEvent {
   id        String       @id @default(cuid())
-  bidId     String
+  bidId     String?
+  bidIdSnapshot String?
+  bidLabel  String?
   action    String       @default("update")
   actor     String       @default("system")
   createdAt DateTime     @default(now())
-  bid       Bid          @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  bid       Bid?         @relation(fields: [bidId], references: [id], onDelete: SetNull)
   changes   AuditChange[]
 }
 
