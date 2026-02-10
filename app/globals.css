@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --sand-50: #f6f4f0;
+  --sand-100: #efebe3;
+  --sand-200: #e1dbcf;
+  --ink-900: #1e1b16;
+  --ink-700: #3d372f;
+  --ink-600: #5a5146;
+  --ink-500: #7a7064;
+  color-scheme: light;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-sand-50: var(--sand-50);
+  --color-sand-100: var(--sand-100);
+  --color-sand-200: var(--sand-200);
+  --color-ink-900: var(--ink-900);
+  --color-ink-700: var(--ink-700);
+  --color-ink-600: var(--ink-600);
+  --color-ink-500: var(--ink-500);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--sand-50);
+  color: var(--ink-900);
+  font-family: var(--font-geist-sans);
+  transition: background-color 700ms ease;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  transition: none;
+}
+
+:root[data-theme="dark"],
+body[data-theme="dark"] {
+  --sand-50: #14110d;
+  --sand-100: #1c1813;
+  --sand-200: #2b241d;
+  --ink-900: #f4efe7;
+  --ink-700: #d9d0c4;
+  --ink-600: #b9ad9c;
+  --ink-500: #9b8f82;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: var(--sand-100);
+}
+
+[data-theme="dark"] .bg-white\/80 {
+  background-color: color-mix(in oklab, var(--sand-100) 82%, transparent);
+}
+
+[data-theme="dark"] .text-red-700 {
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .border-red-200 {
+  border-color: #7f1d1d;
 }

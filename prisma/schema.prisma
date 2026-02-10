@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Bid {
+  id         String    @id @default(cuid())
+  clientName String
+  bidName    String
+  status     BidStatus
+  folderUrl  String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  auditEvents AuditEvent[]
+}
+
+model AuditEvent {
+  id        String       @id @default(cuid())
+  bidId     String
+  action    String       @default("update")
+  actor     String       @default("system")
+  createdAt DateTime     @default(now())
+  bid       Bid          @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  changes   AuditChange[]
+}
+
+model AuditChange {
+  id        String     @id @default(cuid())
+  eventId   String
+  field     String
+  fromValue String
+  toValue   String
+  createdAt DateTime   @default(now())
+  event     AuditEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+enum BidStatus {
+  pending
+  in_progress
+  bid
+  no_bid
+  submitted
+  won
+  lost
+  dropped
+  abandoned
+}
