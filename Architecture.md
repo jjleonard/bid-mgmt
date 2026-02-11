@@ -45,6 +45,14 @@
   - `clientName`
   - `bidName`
   - `status` (enum)
+  - `opportunityType` (enum)
+  - `currentStage` (enum, optional)
+  - `nextStageDate`
+  - `psqReceivedAt`, `psqClarificationDeadlineAt`, `psqSubmissionDeadlineAt`, `psqSubmissionTime`
+  - `ittReceivedAt`, `ittClarificationDeadlineAt`, `ittSubmissionDeadlineAt`, `ittSubmissionTime`
+  - `tcvGbp`, `initialTermMonths`, `extensionTermMonths`, `tcvTermBasis`
+  - `annualValueGbp`
+  - `portalUrl`
   - `folderUrl`
   - `createdAt`, `updatedAt`
 
@@ -65,3 +73,4 @@
 1. Ensure `.env` contains `DATABASE_URL="file:./dev.db"`.
 2. Run `npm run dev`.
 3. Use `npx prisma migrate dev --name init` if you need to recreate the database.
+4. Restart the dev server after Prisma schema changes so the generated client reloads.

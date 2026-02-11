@@ -11,6 +11,23 @@ model Bid {
   clientName String
   bidName    String
   status     BidStatus
+  opportunityType OpportunityType @default(single_tender)
+  currentStage BidStage?
+  nextStageDate DateTime?
+  psqReceivedAt DateTime?
+  psqClarificationDeadlineAt DateTime?
+  psqSubmissionDeadlineAt DateTime?
+  psqSubmissionTime String?
+  ittReceivedAt DateTime?
+  ittClarificationDeadlineAt DateTime?
+  ittSubmissionDeadlineAt DateTime?
+  ittSubmissionTime String?
+  tcvGbp Int?
+  initialTermMonths Int?
+  extensionTermMonths Int?
+  tcvTermBasis TcvTermBasis?
+  annualValueGbp Int?
+  portalUrl String?
   folderUrl  String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -50,4 +67,20 @@ enum BidStatus {
   lost
   dropped
   abandoned
+}
+
+enum OpportunityType {
+  single_tender
+  combined_psq_itt
+  two_stage_psq_itt
+}
+
+enum BidStage {
+  psq
+  itt
+}
+
+enum TcvTermBasis {
+  initial_only
+  initial_plus_extension
 }

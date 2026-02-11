@@ -1,6 +1,12 @@
 import { redirect } from "next/navigation";
 
-import { bidStatusValues } from "@/lib/bids";
+import {
+  bidStageValues,
+  bidStatusValues,
+  computeAnnualValueGbp,
+  opportunityTypeValues,
+  tcvTermBasisValues,
+} from "@/lib/bids";
 import { parseCsv } from "@/lib/csv";
 import { prisma } from "@/lib/prisma";
 import ThemeToggle from "@/app/ThemeToggle";
@@ -25,7 +31,32 @@ type PageProps = {
       }>;
 };
 
-const requiredHeaders = ["clientName", "bidName", "status", "folderUrl"];
+const importHeaders = [
+  "id",
+  "clientName",
+  "bidName",
+  "status",
+  "opportunityType",
+  "currentStage",
+  "nextStageDate",
+  "psqReceivedAt",
+  "psqClarificationDeadlineAt",
+  "psqSubmissionDeadlineAt",
+  "psqSubmissionTime",
+  "ittReceivedAt",
+  "ittClarificationDeadlineAt",
+  "ittSubmissionDeadlineAt",
+  "ittSubmissionTime",
+  "tcvGbp",
+  "initialTermMonths",
+  "extensionTermMonths",
+  "tcvTermBasis",
+  "annualValueGbp",
+  "portalUrl",
+  "folderUrl",
+  "createdAt",
+  "updatedAt",
+];
 
 const statusAliases: Record<string, (typeof bidStatusValues)[number]> = {
   pending: "pending",
@@ -54,6 +85,61 @@ function normalizeStatus(value: string) {
   return statusAliases[key];
 }
 
+function parseOptionalDate(value: string) {
+  const raw = value.trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const date = new Date(raw);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
+}
+
+function parseOptionalTime(value: string) {
+  const raw = value.trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const match = raw.match(/^(\d{2}):(\d{2})$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    return null;
+  }
+
+  return raw;
+}
+
+function parseOptionalInt(value: string) {
+  const raw = value.trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const parsed = Number(raw);
+
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+    return null;
+  }
+
+  return parsed;
+}
+
 async function importCsv(formData: FormData) {
   "use server";
 
@@ -70,7 +156,7 @@ async function importCsv(formData: FormData) {
     headers.map((header, index) => [header.trim(), index])
   );
 
-  const missingHeaders = requiredHeaders.filter((header) => !headerMap.has(header));
+  const missingHeaders = importHeaders.filter((header) => !headerMap.has(header));
 
   if (missingHeaders.length > 0) {
     redirect(
@@ -83,6 +169,23 @@ async function importCsv(formData: FormData) {
     clientName: string;
     bidName: string;
     status: (typeof bidStatusValues)[number];
+    opportunityType: (typeof opportunityTypeValues)[number];
+    currentStage: (typeof bidStageValues)[number] | null;
+    nextStageDate: Date | null;
+    psqReceivedAt: Date | null;
+    psqClarificationDeadlineAt: Date | null;
+    psqSubmissionDeadlineAt: Date | null;
+    psqSubmissionTime: string | null;
+    ittReceivedAt: Date | null;
+    ittClarificationDeadlineAt: Date | null;
+    ittSubmissionDeadlineAt: Date | null;
+    ittSubmissionTime: string | null;
+    tcvGbp: number;
+    initialTermMonths: number;
+    extensionTermMonths: number | null;
+    tcvTermBasis: (typeof tcvTermBasisValues)[number];
+    annualValueGbp: number;
+    portalUrl: string | null;
     folderUrl: string;
   }[] = [];
   let skipped = 0;
@@ -91,6 +194,28 @@ async function importCsv(formData: FormData) {
     const clientName = row[headerMap.get("clientName") ?? -1]?.trim() ?? "";
     const bidName = row[headerMap.get("bidName") ?? -1]?.trim() ?? "";
     const statusRaw = row[headerMap.get("status") ?? -1]?.trim() ?? "";
+    const opportunityTypeRaw = row[headerMap.get("opportunityType") ?? -1]?.trim() ?? "";
+    const currentStageRaw = row[headerMap.get("currentStage") ?? -1]?.trim() ?? "";
+    const nextStageDateRaw = row[headerMap.get("nextStageDate") ?? -1]?.trim() ?? "";
+    const psqReceivedAtRaw = row[headerMap.get("psqReceivedAt") ?? -1]?.trim() ?? "";
+    const psqClarificationDeadlineAtRaw =
+      row[headerMap.get("psqClarificationDeadlineAt") ?? -1]?.trim() ?? "";
+    const psqSubmissionDeadlineAtRaw =
+      row[headerMap.get("psqSubmissionDeadlineAt") ?? -1]?.trim() ?? "";
+    const psqSubmissionTimeRaw = row[headerMap.get("psqSubmissionTime") ?? -1]?.trim() ?? "";
+    const ittReceivedAtRaw = row[headerMap.get("ittReceivedAt") ?? -1]?.trim() ?? "";
+    const ittClarificationDeadlineAtRaw =
+      row[headerMap.get("ittClarificationDeadlineAt") ?? -1]?.trim() ?? "";
+    const ittSubmissionDeadlineAtRaw =
+      row[headerMap.get("ittSubmissionDeadlineAt") ?? -1]?.trim() ?? "";
+    const ittSubmissionTimeRaw = row[headerMap.get("ittSubmissionTime") ?? -1]?.trim() ?? "";
+    const tcvGbpRaw = row[headerMap.get("tcvGbp") ?? -1]?.trim() ?? "";
+    const initialTermMonthsRaw = row[headerMap.get("initialTermMonths") ?? -1]?.trim() ?? "";
+    const extensionTermMonthsRaw =
+      row[headerMap.get("extensionTermMonths") ?? -1]?.trim() ?? "";
+    const tcvTermBasisRaw = row[headerMap.get("tcvTermBasis") ?? -1]?.trim() ?? "";
+    const annualValueGbpRaw = row[headerMap.get("annualValueGbp") ?? -1]?.trim() ?? "";
+    const portalUrlRaw = row[headerMap.get("portalUrl") ?? -1]?.trim() ?? "";
     const folderUrl = row[headerMap.get("folderUrl") ?? -1]?.trim() ?? "";
 
     if (!clientName || !bidName || !statusRaw || !folderUrl) {
@@ -105,9 +230,64 @@ async function importCsv(formData: FormData) {
       continue;
     }
 
+    if (!opportunityTypeRaw || !opportunityTypeValues.includes(opportunityTypeRaw as (typeof opportunityTypeValues)[number])) {
+      skipped += 1;
+      continue;
+    }
+
+    if (!tcvTermBasisRaw || !tcvTermBasisValues.includes(tcvTermBasisRaw as (typeof tcvTermBasisValues)[number])) {
+      skipped += 1;
+      continue;
+    }
+
     try {
       new URL(folderUrl);
     } catch {
+      skipped += 1;
+      continue;
+    }
+
+    if (portalUrlRaw) {
+      try {
+        new URL(portalUrlRaw);
+      } catch {
+        skipped += 1;
+        continue;
+      }
+    }
+
+    const tcvGbp = parseOptionalInt(tcvGbpRaw);
+    const initialTermMonths = parseOptionalInt(initialTermMonthsRaw);
+    const extensionTermMonths = parseOptionalInt(extensionTermMonthsRaw);
+    const annualValueGbpParsed = parseOptionalInt(annualValueGbpRaw);
+
+    if (!tcvGbp || !initialTermMonths) {
+      skipped += 1;
+      continue;
+    }
+
+    const annualValueGbp =
+      annualValueGbpParsed ??
+      computeAnnualValueGbp(
+        tcvGbp,
+        initialTermMonths,
+        extensionTermMonths ?? 0,
+        tcvTermBasisRaw as (typeof tcvTermBasisValues)[number]
+      );
+
+    if (!Number.isFinite(annualValueGbp)) {
+      skipped += 1;
+      continue;
+    }
+
+    const isTwoStage = opportunityTypeRaw === "two_stage_psq_itt";
+    const currentStage = isTwoStage
+      ? (bidStageValues.includes(currentStageRaw as (typeof bidStageValues)[number])
+          ? (currentStageRaw as (typeof bidStageValues)[number])
+          : null)
+      : null;
+
+    if (isTwoStage && !currentStage) {
       skipped += 1;
       continue;
     }
@@ -116,6 +296,23 @@ async function importCsv(formData: FormData) {
       clientName,
       bidName,
       status: normalizedStatus,
+      opportunityType: opportunityTypeRaw as (typeof opportunityTypeValues)[number],
+      currentStage,
+      nextStageDate: isTwoStage ? parseOptionalDate(nextStageDateRaw) : null,
+      psqReceivedAt: isTwoStage ? parseOptionalDate(psqReceivedAtRaw) : null,
+      psqClarificationDeadlineAt: isTwoStage ? parseOptionalDate(psqClarificationDeadlineAtRaw) : null,
+      psqSubmissionDeadlineAt: isTwoStage ? parseOptionalDate(psqSubmissionDeadlineAtRaw) : null,
+      psqSubmissionTime: isTwoStage ? parseOptionalTime(psqSubmissionTimeRaw) : null,
+      ittReceivedAt: parseOptionalDate(ittReceivedAtRaw),
+      ittClarificationDeadlineAt: parseOptionalDate(ittClarificationDeadlineAtRaw),
+      ittSubmissionDeadlineAt: parseOptionalDate(ittSubmissionDeadlineAtRaw),
+      ittSubmissionTime: parseOptionalTime(ittSubmissionTimeRaw),
+      tcvGbp,
+      initialTermMonths,
+      extensionTermMonths,
+      tcvTermBasis: tcvTermBasisRaw as (typeof tcvTermBasisValues)[number],
+      annualValueGbp: annualValueGbp as number,
+      portalUrl: portalUrlRaw || null,
       folderUrl,
     });
   }
@@ -203,11 +400,17 @@ export default async function BidsAdminPage({ searchParams }: PageProps) {
             <div className="rounded-xl border border-sand-100 bg-sand-50 px-4 py-3 text-sm text-ink-600">
               <p className="font-medium text-ink-700">Expected headers</p>
               <code className="mt-2 block text-xs text-ink-600">
-                clientName,bidName,status,folderUrl
+                {importHeaders.join(",")}
               </code>
               <p className="mt-3 text-xs text-ink-500">
                 Status values: pending, pipeline, in progress, bid, no bid,
                 submitted, won, lost, dropped, abandoned
+              </p>
+              <p className="mt-2 text-xs text-ink-500">
+                Opportunity types: single_tender, combined_psq_itt, two_stage_psq_itt
+              </p>
+              <p className="mt-2 text-xs text-ink-500">
+                TCV term basis: initial_only, initial_plus_extension
               </p>
             </div>
 
@@ -229,7 +432,12 @@ export default async function BidsAdminPage({ searchParams }: PageProps) {
               </p>
             </div>
             <div className="rounded-xl border border-sand-100 bg-sand-50 px-4 py-3 text-xs text-ink-600">
-              Fields: id, clientName, bidName, status, folderUrl, createdAt, updatedAt
+              Fields: id, clientName, bidName, status, opportunityType, currentStage,
+              nextStageDate, psqReceivedAt, psqClarificationDeadlineAt,
+              psqSubmissionDeadlineAt, psqSubmissionTime, ittReceivedAt,
+              ittClarificationDeadlineAt, ittSubmissionDeadlineAt, ittSubmissionTime,
+              tcvGbp, initialTermMonths, extensionTermMonths, tcvTermBasis,
+              annualValueGbp, folderUrl, createdAt, updatedAt
             </div>
             <div className="flex flex-wrap gap-3">
               <a

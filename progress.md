@@ -24,6 +24,14 @@
 - Added admin reset flow with explicit confirmation to delete bids and audit history.
 - Added a Pipeline bid status and normalized title-case status labels in the UI.
 
+## 2026-02-11
+- Expanded bids with opportunity type, stage tracking, and two-stage date fields.
+- Added contract value inputs with stored annual value calculation.
+- Added portal link field alongside SharePoint folder link.
+- Updated bid detail layout with clearer section dividers and ordering.
+- Expanded CSV export/import schema to include new bid fields.
+- Added Prisma migrations for new bid detail fields and portal link.
+
 ## Next Steps
 - Add lightweight validation errors on the form UI.
 - Add edit/delete flows for full CRUD.

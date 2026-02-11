@@ -1,8 +1,15 @@
 import { redirect } from "next/navigation";
 
-import { bidStatusOptions, bidStatusValues } from "@/lib/bids";
+import {
+  bidStageValues,
+  bidStatusValues,
+  computeAnnualValueGbp,
+  opportunityTypeValues,
+  tcvTermBasisValues,
+} from "@/lib/bids";
 import { prisma } from "@/lib/prisma";
 import ThemeToggle from "@/app/ThemeToggle";
+import BidForm from "@/app/bids/new/BidForm";
 
 const pageTitle = "New bid";
 
@@ -13,6 +20,33 @@ async function createBid(formData: FormData) {
   const bidName = String(formData.get("bidName") ?? "").trim();
   const status = String(formData.get("status") ?? "");
   const folderUrl = String(formData.get("folderUrl") ?? "").trim();
+  const portalUrl = String(formData.get("portalUrl") ?? "").trim();
+  const opportunityType = String(formData.get("opportunityType") ?? "");
+  const currentStage = String(formData.get("currentStage") ?? "");
+  const nextStageDate = parseOptionalDate(formData.get("nextStageDate"));
+  const psqReceivedAt = parseOptionalDate(formData.get("psqReceivedAt"));
+  const psqClarificationDeadlineAt = parseOptionalDate(
+    formData.get("psqClarificationDeadlineAt")
+  );
+  const psqSubmissionDeadlineAt = parseOptionalDate(
+    formData.get("psqSubmissionDeadlineAt")
+  );
+  const psqSubmissionTime = parseOptionalTime(formData.get("psqSubmissionTime"));
+  const ittReceivedAt = parseOptionalDate(formData.get("ittReceivedAt"));
+  const ittClarificationDeadlineAt = parseOptionalDate(
+    formData.get("ittClarificationDeadlineAt")
+  );
+  const ittSubmissionDeadlineAt = parseOptionalDate(
+    formData.get("ittSubmissionDeadlineAt")
+  );
+  const ittSubmissionTime = parseOptionalTime(formData.get("ittSubmissionTime"));
+  const tcvGbp = parseRequiredInt(formData.get("tcvGbp"), "Total contract value");
+  const initialTermMonths = parseRequiredInt(
+    formData.get("initialTermMonths"),
+    "Initial term"
+  );
+  const extensionTermMonths = parseOptionalInt(formData.get("extensionTermMonths"));
+  const tcvTermBasis = String(formData.get("tcvTermBasis") ?? "");
 
   if (!clientName || !bidName || !folderUrl) {
     throw new Error("All fields are required.");
@@ -22,10 +56,60 @@ async function createBid(formData: FormData) {
     throw new Error("Invalid status.");
   }
 
+  if (
+    !opportunityTypeValues.includes(
+      opportunityType as (typeof opportunityTypeValues)[number]
+    )
+  ) {
+    throw new Error("Invalid opportunity type.");
+  }
+
+  if (
+    opportunityType === "two_stage_psq_itt" &&
+    !bidStageValues.includes(currentStage as (typeof bidStageValues)[number])
+  ) {
+    throw new Error("Current stage is required for two stage bids.");
+  }
+
+  if (!tcvTermBasisValues.includes(tcvTermBasis as (typeof tcvTermBasisValues)[number])) {
+    throw new Error("Invalid TCV term basis.");
+  }
+
   try {
     new URL(folderUrl);
   } catch {
     throw new Error("Folder URL must be a valid URL.");
+  }
+
+  if (portalUrl) {
+    try {
+      new URL(portalUrl);
+    } catch {
+      throw new Error("Portal URL must be a valid URL.");
+    }
+  }
+
+  if (tcvGbp <= 0) {
+    throw new Error("Total contract value must be greater than zero.");
+  }
+
+  if (initialTermMonths <= 0) {
+    throw new Error("Initial term must be at least one month.");
+  }
+
+  if (extensionTermMonths !== null && extensionTermMonths < 0) {
+    throw new Error("Extension term must be zero or greater.");
+  }
+
+  const annualValueGbp = computeAnnualValueGbp(
+    tcvGbp,
+    initialTermMonths,
+    extensionTermMonths ?? 0,
+    tcvTermBasis as (typeof tcvTermBasisValues)[number]
+  );
+
+  if (!Number.isFinite(annualValueGbp)) {
+    throw new Error("Unable to calculate annual value.");
   }
 
   await prisma.bid.create({
@@ -33,6 +117,29 @@ async function createBid(formData: FormData) {
       clientName,
       bidName,
       status: status as (typeof bidStatusValues)[number],
+      opportunityType: opportunityType as (typeof opportunityTypeValues)[number],
+      currentStage:
+        opportunityType === "two_stage_psq_itt"
+          ? (currentStage as (typeof bidStageValues)[number])
+          : null,
+      nextStageDate: opportunityType === "two_stage_psq_itt" ? nextStageDate : null,
+      psqReceivedAt: opportunityType === "two_stage_psq_itt" ? psqReceivedAt : null,
+      psqClarificationDeadlineAt:
+        opportunityType === "two_stage_psq_itt" ? psqClarificationDeadlineAt : null,
+      psqSubmissionDeadlineAt:
+        opportunityType === "two_stage_psq_itt" ? psqSubmissionDeadlineAt : null,
+      psqSubmissionTime:
+        opportunityType === "two_stage_psq_itt" ? psqSubmissionTime : null,
+      ittReceivedAt,
+      ittClarificationDeadlineAt,
+      ittSubmissionDeadlineAt,
+      ittSubmissionTime,
+      tcvGbp,
+      initialTermMonths,
+      extensionTermMonths,
+      tcvTermBasis: tcvTermBasis as (typeof tcvTermBasisValues)[number],
+      annualValueGbp,
+      portalUrl: portalUrl || null,
       folderUrl,
     },
   });
@@ -58,85 +165,79 @@ export default function NewBidPage() {
           <ThemeToggle />
         </header>
 
-        <form
-          action={createBid}
-          className="flex flex-col gap-6 rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm"
-        >
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-ink-700" htmlFor="clientName">
-              Client name
-            </label>
-            <input
-              id="clientName"
-              name="clientName"
-              required
-              placeholder="Acme Industries"
-              className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-ink-700" htmlFor="bidName">
-              Bid name
-            </label>
-            <input
-              id="bidName"
-              name="bidName"
-              required
-              placeholder="2026 Facilities RFP"
-              className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-ink-700" htmlFor="status">
-              Status
-            </label>
-            <select
-              id="status"
-              name="status"
-              required
-              defaultValue="pending"
-              className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
-            >
-              {bidStatusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-ink-700" htmlFor="folderUrl">
-              SharePoint folder URL
-            </label>
-            <input
-              id="folderUrl"
-              name="folderUrl"
-              type="url"
-              required
-              placeholder="https://company.sharepoint.com/sites/bids/..."
-              className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
-            />
-          </div>
-
-          <div className="flex items-center justify-between gap-4 pt-2">
-            <a
-              href="/bids"
-              className="text-sm font-medium text-ink-500 transition hover:text-ink-700"
-            >
-              Back to bids
-            </a>
-            <button
-              type="submit"
-              className="inline-flex h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-sand-50 transition hover:bg-ink-700"
-            >
-              Save bid
-            </button>
-          </div>
-        </form>
+        <BidForm action={createBid} />
       </main>
     </div>
   );
+}
+
+function parseOptionalDate(value: FormDataEntryValue | null) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const date = new Date(`${raw}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Invalid date provided.");
+  }
+
+  return date;
+}
+
+function parseOptionalTime(value: FormDataEntryValue | null) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const match = raw.match(/^(\d{2}):(\d{2})$/);
+
+  if (!match) {
+    throw new Error("Submission time must be HH:MM.");
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    throw new Error("Submission time must be a valid 24-hour time.");
+  }
+
+  return raw;
+}
+
+function parseRequiredInt(value: FormDataEntryValue | null, label: string) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    throw new Error(`${label} is required.`);
+  }
+
+  const parsed = Number(raw);
+
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+    throw new Error(`${label} must be a whole number.`);
+  }
+
+  return parsed;
+}
+
+function parseOptionalInt(value: FormDataEntryValue | null) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const parsed = Number(raw);
+
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+    throw new Error("Extension term must be a whole number.");
+  }
+
+  return parsed;
 }

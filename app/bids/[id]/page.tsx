@@ -1,7 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
-import { bidStatusValues, getBidStatusLabel } from "@/lib/bids";
+import {
+  bidStageValues,
+  bidStatusValues,
+  computeAnnualValueGbp,
+  getBidStatusLabel,
+  opportunityTypeValues,
+  tcvTermBasisValues,
+} from "@/lib/bids";
 import ThemeToggle from "@/app/ThemeToggle";
 import BidDetailsEditor from "@/app/bids/[id]/BidDetailsEditor";
 
@@ -47,6 +54,23 @@ export default async function BidDetailsPage({ params }: PageProps) {
     clientName: "Client name",
     bidName: "Bid name",
     status: "Status",
+    opportunityType: "Opportunity type",
+    currentStage: "Current stage",
+    nextStageDate: "Next stage date",
+    psqReceivedAt: "PSQ received",
+    psqClarificationDeadlineAt: "PSQ clarification deadline",
+    psqSubmissionDeadlineAt: "PSQ submission deadline",
+    psqSubmissionTime: "PSQ submission time",
+    ittReceivedAt: "ITT received",
+    ittClarificationDeadlineAt: "ITT clarification deadline",
+    ittSubmissionDeadlineAt: "ITT submission deadline",
+    ittSubmissionTime: "ITT submission time",
+    tcvGbp: "Total contract value",
+    initialTermMonths: "Initial term (months)",
+    extensionTermMonths: "Extension term (months)",
+    tcvTermBasis: "TCV term basis",
+    annualValueGbp: "Annual value",
+    portalUrl: "Portal link",
     folderUrl: "SharePoint folder URL",
   };
 
@@ -64,6 +88,33 @@ export default async function BidDetailsPage({ params }: PageProps) {
     const bidName = String(formData.get("bidName") ?? "").trim();
     const status = String(formData.get("status") ?? "");
     const folderUrl = String(formData.get("folderUrl") ?? "").trim();
+    const portalUrl = String(formData.get("portalUrl") ?? "").trim();
+    const opportunityType = String(formData.get("opportunityType") ?? "");
+    const currentStage = String(formData.get("currentStage") ?? "");
+    const nextStageDate = parseOptionalDate(formData.get("nextStageDate"));
+    const psqReceivedAt = parseOptionalDate(formData.get("psqReceivedAt"));
+    const psqClarificationDeadlineAt = parseOptionalDate(
+      formData.get("psqClarificationDeadlineAt")
+    );
+    const psqSubmissionDeadlineAt = parseOptionalDate(
+      formData.get("psqSubmissionDeadlineAt")
+    );
+    const psqSubmissionTime = parseOptionalTime(formData.get("psqSubmissionTime"));
+    const ittReceivedAt = parseOptionalDate(formData.get("ittReceivedAt"));
+    const ittClarificationDeadlineAt = parseOptionalDate(
+      formData.get("ittClarificationDeadlineAt")
+    );
+    const ittSubmissionDeadlineAt = parseOptionalDate(
+      formData.get("ittSubmissionDeadlineAt")
+    );
+    const ittSubmissionTime = parseOptionalTime(formData.get("ittSubmissionTime"));
+    const tcvGbp = parseRequiredInt(formData.get("tcvGbp"), "Total contract value");
+    const initialTermMonths = parseRequiredInt(
+      formData.get("initialTermMonths"),
+      "Initial term"
+    );
+    const extensionTermMonths = parseOptionalInt(formData.get("extensionTermMonths"));
+    const tcvTermBasis = String(formData.get("tcvTermBasis") ?? "");
 
     if (!id || !clientName || !bidName || !folderUrl) {
       throw new Error("All fields are required.");
@@ -73,10 +124,49 @@ export default async function BidDetailsPage({ params }: PageProps) {
       throw new Error("Invalid status.");
     }
 
+    if (
+      !opportunityTypeValues.includes(
+        opportunityType as (typeof opportunityTypeValues)[number]
+      )
+    ) {
+      throw new Error("Invalid opportunity type.");
+    }
+
+    if (
+      opportunityType === "two_stage_psq_itt" &&
+      !bidStageValues.includes(currentStage as (typeof bidStageValues)[number])
+    ) {
+      throw new Error("Current stage is required for two stage bids.");
+    }
+
+    if (!tcvTermBasisValues.includes(tcvTermBasis as (typeof tcvTermBasisValues)[number])) {
+      throw new Error("Invalid TCV term basis.");
+    }
+
     try {
       new URL(folderUrl);
     } catch {
       throw new Error("Folder URL must be a valid URL.");
+    }
+
+    if (portalUrl) {
+      try {
+        new URL(portalUrl);
+      } catch {
+        throw new Error("Portal URL must be a valid URL.");
+      }
+    }
+
+    if (tcvGbp <= 0) {
+      throw new Error("Total contract value must be greater than zero.");
+    }
+
+    if (initialTermMonths <= 0) {
+      throw new Error("Initial term must be at least one month.");
+    }
+
+    if (extensionTermMonths !== null && extensionTermMonths < 0) {
+      throw new Error("Extension term must be zero or greater.");
     }
 
     const currentBid = await prisma.bid.findUnique({
@@ -87,38 +177,103 @@ export default async function BidDetailsPage({ params }: PageProps) {
       notFound();
     }
 
+    const annualValueGbp = computeAnnualValueGbp(
+      tcvGbp,
+      initialTermMonths,
+      extensionTermMonths ?? 0,
+      tcvTermBasis as (typeof tcvTermBasisValues)[number]
+    );
+
+    if (!Number.isFinite(annualValueGbp)) {
+      throw new Error("Unable to calculate annual value.");
+    }
+
     const changes: { field: string; fromValue: string; toValue: string }[] = [];
 
+    const pushChange = (field: string, fromValue: string, toValue: string) => {
+      if (fromValue !== toValue) {
+        changes.push({ field, fromValue, toValue });
+      }
+    };
+
     if (currentBid.clientName !== clientName) {
-      changes.push({
-        field: "clientName",
-        fromValue: currentBid.clientName,
-        toValue: clientName,
-      });
+      pushChange("clientName", currentBid.clientName, clientName);
     }
 
     if (currentBid.bidName !== bidName) {
-      changes.push({
-        field: "bidName",
-        fromValue: currentBid.bidName,
-        toValue: bidName,
-      });
+      pushChange("bidName", currentBid.bidName, bidName);
     }
 
     if (currentBid.status !== status) {
-      changes.push({
-        field: "status",
-        fromValue: currentBid.status,
-        toValue: status,
-      });
+      pushChange("status", currentBid.status, status);
     }
 
+    if (currentBid.portalUrl !== portalUrl) {
+      pushChange("portalUrl", currentBid.portalUrl ?? "", portalUrl);
+    }
+
+    if (currentBid.opportunityType !== opportunityType) {
+      pushChange("opportunityType", currentBid.opportunityType, opportunityType);
+    }
+
+    pushChange(
+      "currentStage",
+      currentBid.currentStage ?? "",
+      opportunityType === "two_stage_psq_itt" ? currentStage : ""
+    );
+
+    pushChange(
+      "nextStageDate",
+      formatDateInput(currentBid.nextStageDate),
+      opportunityType === "two_stage_psq_itt" ? formatDateInput(nextStageDate) : ""
+    );
+
+    pushChange("psqReceivedAt", formatDateInput(currentBid.psqReceivedAt), formatDateInput(psqReceivedAt));
+    pushChange(
+      "psqClarificationDeadlineAt",
+      formatDateInput(currentBid.psqClarificationDeadlineAt),
+      formatDateInput(psqClarificationDeadlineAt)
+    );
+    pushChange(
+      "psqSubmissionDeadlineAt",
+      formatDateInput(currentBid.psqSubmissionDeadlineAt),
+      formatDateInput(psqSubmissionDeadlineAt)
+    );
+    pushChange("psqSubmissionTime", currentBid.psqSubmissionTime ?? "", psqSubmissionTime ?? "");
+
+    pushChange("ittReceivedAt", formatDateInput(currentBid.ittReceivedAt), formatDateInput(ittReceivedAt));
+    pushChange(
+      "ittClarificationDeadlineAt",
+      formatDateInput(currentBid.ittClarificationDeadlineAt),
+      formatDateInput(ittClarificationDeadlineAt)
+    );
+    pushChange(
+      "ittSubmissionDeadlineAt",
+      formatDateInput(currentBid.ittSubmissionDeadlineAt),
+      formatDateInput(ittSubmissionDeadlineAt)
+    );
+    pushChange("ittSubmissionTime", currentBid.ittSubmissionTime ?? "", ittSubmissionTime ?? "");
+
+    pushChange("tcvGbp", String(currentBid.tcvGbp ?? ""), String(tcvGbp));
+    pushChange(
+      "initialTermMonths",
+      String(currentBid.initialTermMonths ?? ""),
+      String(initialTermMonths)
+    );
+    pushChange(
+      "extensionTermMonths",
+      String(currentBid.extensionTermMonths ?? ""),
+      extensionTermMonths === null ? "" : String(extensionTermMonths)
+    );
+    pushChange("tcvTermBasis", currentBid.tcvTermBasis ?? "", tcvTermBasis);
+    pushChange(
+      "annualValueGbp",
+      String(currentBid.annualValueGbp ?? ""),
+      String(annualValueGbp)
+    );
+
     if (currentBid.folderUrl !== folderUrl) {
-      changes.push({
-        field: "folderUrl",
-        fromValue: currentBid.folderUrl,
-        toValue: folderUrl,
-      });
+      pushChange("folderUrl", currentBid.folderUrl, folderUrl);
     }
 
     if (changes.length === 0) {
@@ -132,6 +287,29 @@ export default async function BidDetailsPage({ params }: PageProps) {
           clientName,
           bidName,
           status: status as (typeof bidStatusValues)[number],
+          opportunityType: opportunityType as (typeof opportunityTypeValues)[number],
+          currentStage:
+            opportunityType === "two_stage_psq_itt"
+              ? (currentStage as (typeof bidStageValues)[number])
+              : null,
+          nextStageDate: opportunityType === "two_stage_psq_itt" ? nextStageDate : null,
+          psqReceivedAt: opportunityType === "two_stage_psq_itt" ? psqReceivedAt : null,
+          psqClarificationDeadlineAt:
+            opportunityType === "two_stage_psq_itt" ? psqClarificationDeadlineAt : null,
+          psqSubmissionDeadlineAt:
+            opportunityType === "two_stage_psq_itt" ? psqSubmissionDeadlineAt : null,
+          psqSubmissionTime:
+            opportunityType === "two_stage_psq_itt" ? psqSubmissionTime : null,
+          ittReceivedAt,
+          ittClarificationDeadlineAt,
+          ittSubmissionDeadlineAt,
+          ittSubmissionTime,
+          tcvGbp,
+          initialTermMonths,
+          extensionTermMonths,
+          tcvTermBasis: tcvTermBasis as (typeof tcvTermBasisValues)[number],
+          annualValueGbp,
+          portalUrl: portalUrl || null,
           folderUrl,
         },
       });
@@ -200,6 +378,11 @@ export default async function BidDetailsPage({ params }: PageProps) {
         fromValue: currentBid.folderUrl,
         toValue: "[deleted]",
       },
+      {
+        field: "portalUrl",
+        fromValue: currentBid.portalUrl ?? "",
+        toValue: "[deleted]",
+      },
     ];
 
     await prisma.$transaction(async (tx) => {
@@ -254,12 +437,29 @@ export default async function BidDetailsPage({ params }: PageProps) {
           bid={{
             id: bid.id,
             clientName: bid.clientName,
-            bidName: bid.bidName,
-            status: bid.status,
-            folderUrl: bid.folderUrl,
-          }}
-          onSave={updateBid}
-          onDelete={deleteBid}
+          bidName: bid.bidName,
+          status: bid.status,
+          opportunityType: bid.opportunityType,
+          currentStage: bid.currentStage,
+          nextStageDate: formatDateInput(bid.nextStageDate),
+          psqReceivedAt: formatDateInput(bid.psqReceivedAt),
+          psqClarificationDeadlineAt: formatDateInput(bid.psqClarificationDeadlineAt),
+          psqSubmissionDeadlineAt: formatDateInput(bid.psqSubmissionDeadlineAt),
+          psqSubmissionTime: bid.psqSubmissionTime,
+          ittReceivedAt: formatDateInput(bid.ittReceivedAt),
+          ittClarificationDeadlineAt: formatDateInput(bid.ittClarificationDeadlineAt),
+          ittSubmissionDeadlineAt: formatDateInput(bid.ittSubmissionDeadlineAt),
+          ittSubmissionTime: bid.ittSubmissionTime,
+          tcvGbp: bid.tcvGbp,
+          initialTermMonths: bid.initialTermMonths,
+          extensionTermMonths: bid.extensionTermMonths,
+          tcvTermBasis: bid.tcvTermBasis,
+          annualValueGbp: bid.annualValueGbp,
+          portalUrl: bid.portalUrl,
+          folderUrl: bid.folderUrl,
+        }}
+        onSave={updateBid}
+        onDelete={deleteBid}
         />
 
         <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">
@@ -319,4 +519,79 @@ export default async function BidDetailsPage({ params }: PageProps) {
       </main>
     </div>
   );
+}
+
+function parseOptionalDate(value: FormDataEntryValue | null) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const date = new Date(`${raw}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Invalid date provided.");
+  }
+
+  return date;
+}
+
+function parseOptionalTime(value: FormDataEntryValue | null) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const match = raw.match(/^(\d{2}):(\d{2})$/);
+
+  if (!match) {
+    throw new Error("Submission time must be HH:MM.");
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    throw new Error("Submission time must be a valid 24-hour time.");
+  }
+
+  return raw;
+}
+
+function parseRequiredInt(value: FormDataEntryValue | null, label: string) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    throw new Error(`${label} is required.`);
+  }
+
+  const parsed = Number(raw);
+
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+    throw new Error(`${label} must be a whole number.`);
+  }
+
+  return parsed;
+}
+
+function parseOptionalInt(value: FormDataEntryValue | null) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const parsed = Number(raw);
+
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+    throw new Error("Extension term must be a whole number.");
+  }
+
+  return parsed;
+}
+
+function formatDateInput(value: Date | null | undefined) {
+  return value ? value.toISOString().slice(0, 10) : "";
 }
