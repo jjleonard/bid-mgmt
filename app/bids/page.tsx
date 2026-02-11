@@ -1,4 +1,4 @@
-import { bidStatusOptions, bidStatusValues } from "@/lib/bids";
+import { bidStatusOptions, bidStatusValues, getBidStatusLabel } from "@/lib/bids";
 import { prisma } from "@/lib/prisma";
 import ClientSort from "@/app/bids/ClientSort";
 import StatusFilter from "@/app/bids/StatusFilter";
@@ -74,6 +74,7 @@ export default async function BidsPage({ searchParams }: PageProps) {
       ? [{ clientName: clientSortDirection }, { createdAt: "desc" }]
       : { createdAt: "desc" },
   })) as BidRow[];
+
 
   return (
     <div className="min-h-screen bg-sand-50 text-ink-900">
@@ -151,7 +152,7 @@ export default async function BidsPage({ searchParams }: PageProps) {
                     </a>
                   </span>
                   <span className="col-span-2 capitalize">
-                    {bid.status.replace("_", " ")}
+                    {getBidStatusLabel(bid.status as (typeof bidStatusValues)[number])}
                   </span>
                   <span className="col-span-3 truncate">
                     <a

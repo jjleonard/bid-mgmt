@@ -21,7 +21,10 @@
 - Bid list supports client-name search via `q` query param.
 - UI includes a per-page theme toggle and subtle zebra striping for scanability.
 - CSV admin import validates and inserts valid rows, skipping invalid entries.
+- Admin page supports CSV exports for bids and audit trail data.
+- Admin page includes a reset flow that deletes bids and audit history with a confirmation phrase.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
+  - Added pipeline.
 
 ## Key Paths
 - Data model: `prisma/schema.prisma`
@@ -55,6 +58,8 @@
 - Deleting a bid logs a `delete` audit event and preserves snapshots of bid identity.
 - `/bids/[id]` fetches a single bid by id.
 - `/bids/admin` uploads a CSV, validates rows, inserts valid bids, and reports counts.
+- `/bids/admin/export` downloads all bids as CSV.
+- `/bids/admin/export-audit` downloads audit events and changes as CSV.
 
 ## Local Development
 1. Ensure `.env` contains `DATABASE_URL="file:./dev.db"`.

@@ -41,6 +41,7 @@ model AuditChange {
 
 enum BidStatus {
   pending
+  pipeline
   in_progress
   bid
   no_bid

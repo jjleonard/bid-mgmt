@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { bidStatusOptions } from "@/lib/bids";
+import { bidStatusOptions, getBidStatusLabel } from "@/lib/bids";
 
 type BidDetails = {
   id: string;
@@ -24,6 +24,7 @@ export default function BidDetailsEditor({
 }: BidDetailsEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const statusLabel = getBidStatusLabel(bid.status as (typeof bidStatusOptions)[number]["value"]);
 
   if (!isEditing) {
     return (
@@ -46,7 +47,7 @@ export default function BidDetailsEditor({
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Status</p>
             <p className="text-lg font-medium text-ink-900 capitalize">
-              {bid.status.replace("_", " ")}
+              {statusLabel}
             </p>
           </div>
           <div className="space-y-2">

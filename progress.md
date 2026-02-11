@@ -20,6 +20,9 @@
 - Added a client-name search filter on the bids list.
 - Added edit and delete flows on bid detail pages with inline confirmation.
 - Added audit trail snapshots to preserve context after deletions.
+- Added CSV export for bids and audit trail data from the admin page.
+- Added admin reset flow with explicit confirmation to delete bids and audit history.
+- Added a Pipeline bid status and normalized title-case status labels in the UI.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.

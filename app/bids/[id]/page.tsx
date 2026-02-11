@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
-import { bidStatusValues } from "@/lib/bids";
+import { bidStatusValues, getBidStatusLabel } from "@/lib/bids";
 import ThemeToggle from "@/app/ThemeToggle";
 import BidDetailsEditor from "@/app/bids/[id]/BidDetailsEditor";
 
@@ -53,6 +53,8 @@ export default async function BidDetailsPage({ params }: PageProps) {
   if (!bid) {
     notFound();
   }
+
+  const statusLabel = getBidStatusLabel(bid.status);
 
   async function updateBid(formData: FormData) {
     "use server";
@@ -242,7 +244,7 @@ export default async function BidDetailsPage({ params }: PageProps) {
             </p>
             <h1 className="text-3xl font-semibold tracking-tight">{bid.bidName}</h1>
             <p className="text-base text-ink-600">
-              {bid.clientName} · {bid.status.replace("_", " ")}
+              {bid.clientName} · {statusLabel}
             </p>
           </div>
           <ThemeToggle />
