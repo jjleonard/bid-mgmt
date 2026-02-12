@@ -182,11 +182,11 @@ async function importCsv(formData: FormData) {
     ittClarificationDeadlineAt: Date | null;
     ittSubmissionDeadlineAt: Date | null;
     ittSubmissionTime: string | null;
-    tcvGbp: number;
-    initialTermMonths: number;
+    tcvGbp: number | null;
+    initialTermMonths: number | null;
     extensionTermMonths: number | null;
-    tcvTermBasis: (typeof tcvTermBasisValues)[number];
-    annualValueGbp: number;
+    tcvTermBasis: (typeof tcvTermBasisValues)[number] | null;
+    annualValueGbp: number | null;
     portalUrl: string | null;
     folderUrl: string;
   }[] = [];
@@ -232,12 +232,20 @@ async function importCsv(formData: FormData) {
       continue;
     }
 
-    if (!opportunityTypeRaw || !opportunityTypeValues.includes(opportunityTypeRaw as (typeof opportunityTypeValues)[number])) {
+    const opportunityType = opportunityTypeRaw
+      ? (opportunityTypeRaw as (typeof opportunityTypeValues)[number])
+      : "single_tender";
+
+    if (!opportunityTypeValues.includes(opportunityType)) {
       skipped += 1;
       continue;
     }
 
-    if (!tcvTermBasisRaw || !tcvTermBasisValues.includes(tcvTermBasisRaw as (typeof tcvTermBasisValues)[number])) {
+    const tcvTermBasis = tcvTermBasisRaw
+      ? (tcvTermBasisRaw as (typeof tcvTermBasisValues)[number])
+      : null;
+
+    if (tcvTermBasis && !tcvTermBasisValues.includes(tcvTermBasis)) {
       skipped += 1;
       continue;
     }
@@ -263,26 +271,30 @@ async function importCsv(formData: FormData) {
     const extensionTermMonths = parseOptionalInt(extensionTermMonthsRaw);
     const annualValueGbpParsed = parseOptionalInt(annualValueGbpRaw);
 
-    if (!tcvGbp || !initialTermMonths) {
-      skipped += 1;
-      continue;
-    }
+    let annualValueGbp: number | null = null;
 
-    const annualValueGbp =
-      annualValueGbpParsed ??
-      computeAnnualValueGbp(
+    if (
+      tcvGbp !== null &&
+      initialTermMonths !== null &&
+      tcvTermBasis
+    ) {
+      const computed = computeAnnualValueGbp(
         tcvGbp,
         initialTermMonths,
         extensionTermMonths ?? 0,
-        tcvTermBasisRaw as (typeof tcvTermBasisValues)[number]
+        tcvTermBasis
       );
 
-    if (!Number.isFinite(annualValueGbp)) {
-      skipped += 1;
-      continue;
+      if (Number.isFinite(computed)) {
+        annualValueGbp = computed as number;
+      }
     }
 
-    const isTwoStage = opportunityTypeRaw === "two_stage_psq_itt";
+    if (annualValueGbpParsed !== null) {
+      annualValueGbp = annualValueGbpParsed;
+    }
+
+    const isTwoStage = opportunityType === "two_stage_psq_itt";
     const currentStage = isTwoStage
       ? (bidStageValues.includes(currentStageRaw as (typeof bidStageValues)[number])
           ? (currentStageRaw as (typeof bidStageValues)[number])
@@ -298,7 +310,7 @@ async function importCsv(formData: FormData) {
       clientName,
       bidName,
       status: normalizedStatus,
-      opportunityType: opportunityTypeRaw as (typeof opportunityTypeValues)[number],
+      opportunityType,
       currentStage,
       nextStageDate: isTwoStage ? parseOptionalDate(nextStageDateRaw) : null,
       psqReceivedAt: isTwoStage ? parseOptionalDate(psqReceivedAtRaw) : null,
@@ -312,8 +324,8 @@ async function importCsv(formData: FormData) {
       tcvGbp,
       initialTermMonths,
       extensionTermMonths,
-      tcvTermBasis: tcvTermBasisRaw as (typeof tcvTermBasisValues)[number],
-      annualValueGbp: annualValueGbp as number,
+      tcvTermBasis,
+      annualValueGbp,
       portalUrl: portalUrlRaw || null,
       folderUrl,
     });
