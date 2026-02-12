@@ -9,7 +9,6 @@ import {
 } from "@/lib/bids";
 import { parseCsv } from "@/lib/csv";
 import { prisma } from "@/lib/prisma";
-import ThemeToggle from "@/app/ThemeToggle";
 
 type PageProps = {
   searchParams?:
@@ -378,7 +377,6 @@ export default async function BidsAdminPage({ searchParams }: PageProps) {
               unchanged.
             </p>
           </div>
-          <ThemeToggle />
         </header>
 
         <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">

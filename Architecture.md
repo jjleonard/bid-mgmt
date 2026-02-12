@@ -4,7 +4,8 @@
 - A Next.js App Router project with server components and server actions.
 - SQLite for local persistence, accessed via Prisma with a driver adapter.
 - Minimal UI built with Tailwind v4 and custom neutral palette.
-- Light/dark theming via CSS tokens and a small client toggle.
+- Light/dark theming via CSS tokens and a shared navbar toggle.
+- Email/password authentication backed by session cookies.
 
 ## Key Principles
 - Server components fetch data directly, keeping queries close to the route.
@@ -19,10 +20,12 @@
 ## Current State Snapshot
 - Bid list supports status filtering, client-name sorting, and deep links to details.
 - Bid list supports client-name search via `q` query param.
-- UI includes a per-page theme toggle and subtle zebra striping for scanability.
+- UI includes a shared navbar with user display, nav links, and a theme toggle.
 - CSV admin import validates and inserts valid rows, skipping invalid entries.
 - Admin page supports CSV exports for bids and audit trail data.
 - Admin page includes a reset flow that deletes bids and audit history with a confirmation phrase.
+- Admin user creation lives at `/admin` with optional bootstrap token.
+- Login/logout available at `/login` and via the navbar.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 
@@ -31,12 +34,16 @@
 - Prisma config: `prisma.config.ts`
 - Prisma client: `lib/prisma.ts` (uses `@prisma/adapter-better-sqlite3`)
 - Bid status helpers: `lib/bids.ts`
+- Auth helpers: `lib/auth.ts`
 - Routes:
   - `app/page.tsx` (landing)
   - `app/bids/page.tsx` (list + filter)
   - `app/bids/new/page.tsx` (new bid form)
   - `app/bids/[id]/page.tsx` (bid details)
   - `app/bids/admin/page.tsx` (CSV import)
+  - `app/admin/page.tsx` (user creation)
+  - `app/login/page.tsx` (login)
+- Shared nav: `app/NavBar.tsx`
 - Theme toggle: `app/ThemeToggle.tsx`
 
 ## Data Model
@@ -55,6 +62,18 @@
   - `portalUrl`
   - `folderUrl`
   - `createdAt`, `updatedAt`
+- `User`
+  - `id` (cuid)
+  - `firstName`, `surname`
+  - `email` (unique)
+  - `role` (enum)
+  - `passwordHash`
+  - `createdAt`, `updatedAt`
+- `Session`
+  - `id` (cuid)
+  - `userId`
+  - `token` (unique)
+  - `expiresAt`
 
 ## Data Flow
 - `/bids/new` posts via a server action.
@@ -62,15 +81,18 @@
 - On success, the user is redirected to `/bids`.
 - `/bids` fetches the latest bids on the server and supports filtering by status via query string.
 - `/bids` also supports client search via `q`, with filters reset on search submit.
-- Theme is set via `data-theme` tokens and can be toggled on any page header.
+- Theme is set via `data-theme` tokens and can be toggled from the navbar.
 - Deleting a bid logs a `delete` audit event and preserves snapshots of bid identity.
 - `/bids/[id]` fetches a single bid by id.
 - `/bids/admin` uploads a CSV, validates rows, inserts valid bids, and reports counts.
 - `/bids/admin/export` downloads all bids as CSV.
 - `/bids/admin/export-audit` downloads audit events and changes as CSV.
+- `/admin` creates users (with optional `ADMIN_BOOTSTRAP_TOKEN` check).
+- `/login` verifies credentials, creates a session, and writes a cookie.
 
 ## Local Development
 1. Ensure `.env` contains `DATABASE_URL="file:./dev.db"`.
-2. Run `npm run dev`.
-3. Use `npx prisma migrate dev --name init` if you need to recreate the database.
-4. Restart the dev server after Prisma schema changes so the generated client reloads.
+2. (Optional) Set `ADMIN_BOOTSTRAP_TOKEN` to require a token for user creation.
+3. Run `npm run dev`.
+4. Use `npx prisma migrate dev --name init` if you need to recreate the database.
+5. Restart the dev server after Prisma schema changes so the generated client reloads.

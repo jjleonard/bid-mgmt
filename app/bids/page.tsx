@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import ClientSort from "@/app/bids/ClientSort";
 import StatusFilter from "@/app/bids/StatusFilter";
 import SearchFilter from "@/app/bids/SearchFilter";
-import ThemeToggle from "@/app/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -90,7 +89,6 @@ export default async function BidsPage({ searchParams }: PageProps) {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <ThemeToggle />
             <a
               href="/bids/new"
               className="inline-flex h-11 items-center justify-center rounded-full border border-ink-900 px-5 text-sm font-semibold text-ink-900 transition hover:bg-ink-900 hover:text-sand-50"

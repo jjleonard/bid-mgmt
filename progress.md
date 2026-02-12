@@ -32,7 +32,17 @@
 - Expanded CSV export/import schema to include new bid fields.
 - Added Prisma migrations for new bid detail fields and portal link.
 
+## 2026-02-12
+- Added `User` and `Session` models with role support in Prisma.
+- Added `/admin` user creation page with bootstrap token support.
+- Added `/login` page with email/password authentication.
+- Added session cookie handling and login/logout actions.
+- Introduced a shared navbar with user display and navigation.
+- Moved the theme toggle into the navbar and removed per-page toggles.
+- Updated the landing page copy to a generic app entry point.
+
 ## Next Steps
 - Add lightweight validation errors on the form UI.
 - Add edit/delete flows for full CRUD.
-- Introduce authentication and access rules.
+- Protect routes and enforce role-based access.
+- Add password reset or admin password rotation.

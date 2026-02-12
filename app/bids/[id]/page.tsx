@@ -9,7 +9,6 @@ import {
   opportunityTypeValues,
   tcvTermBasisValues,
 } from "@/lib/bids";
-import ThemeToggle from "@/app/ThemeToggle";
 import BidDetailsEditor from "@/app/bids/[id]/BidDetailsEditor";
 
 type PageProps = {
@@ -430,7 +429,6 @@ export default async function BidDetailsPage({ params }: PageProps) {
               {bid.clientName} · {statusLabel}
             </p>
           </div>
-          <ThemeToggle />
         </header>
 
         <BidDetailsEditor

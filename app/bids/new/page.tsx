@@ -8,7 +8,6 @@ import {
   tcvTermBasisValues,
 } from "@/lib/bids";
 import { prisma } from "@/lib/prisma";
-import ThemeToggle from "@/app/ThemeToggle";
 import BidForm from "@/app/bids/new/BidForm";
 
 const pageTitle = "New bid";
@@ -162,7 +161,6 @@ export default function NewBidPage() {
               time.
             </p>
           </div>
-          <ThemeToggle />
         </header>
 
         <BidForm action={createBid} />
