@@ -51,6 +51,7 @@
 - Added default footer branding and sticky footer layout.
 - Added Docker deployment setup with Cloudflare Tunnel support.
 - Added admin bootstrap command for fresh deployments.
+- Documented Cloudflare tunnel route configuration.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.

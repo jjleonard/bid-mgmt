@@ -33,6 +33,7 @@
 - Branding settings control the navbar logo and footer company details.
 - Footer shows fallback branding when no custom settings are saved.
 - Docker deployment available with Cloudflare Tunnel companion container.
+- Cloudflare tunnel routes target the app service at `http://app:3000`.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 

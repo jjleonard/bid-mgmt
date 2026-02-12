@@ -101,6 +101,15 @@ docker compose up -d --build
 - View logs: `docker compose logs -f app`
 - Stop: `docker compose down`
 
+## Cloudflare tunnel route
+In the Cloudflare dashboard, set the route/service to:
+
+```
+http://app:3000
+```
+
+That targets the app container by service name on the Docker network.
+
 ## Notes
 - SQLite DB persists in the `data/` folder on the host.
 - Branding uploads persist in the `branding/` folder on the host.
