@@ -23,11 +23,14 @@ async function resetPassword(formData: FormData) {
 
   const token = String(formData.get("token") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
-  if (!token || password.length < 10) {
+  if (!token || password.length < 10 || password !== confirmPassword) {
     redirect(
       "/reset-password?error=" +
-        encodeURIComponent("Reset link is invalid or the password is too short.")
+        encodeURIComponent(
+          "Reset link is invalid, the password is too short, or the passwords do not match."
+        )
     );
   }
 
@@ -97,6 +100,22 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
                   className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
                 />
                 <p className="text-xs text-ink-500">Minimum 10 characters.</p>
+              </div>
+              <div className="grid gap-2">
+                <label
+                  className="text-sm font-medium text-ink-700"
+                  htmlFor="confirmPassword"
+                >
+                  Confirm new password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  minLength={10}
+                  required
+                  className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
+                />
               </div>
 
               <div className="flex items-center justify-end">

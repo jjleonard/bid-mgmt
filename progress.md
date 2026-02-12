@@ -43,6 +43,8 @@
 - Added password reset token model and reset email flow scaffolding.
 - Added `/forgot-password` and `/reset-password` pages.
 - Added admin-triggered password reset email action.
+- Added rate limiting for password reset requests by email and IP.
+- Added password confirmation field on reset form.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.

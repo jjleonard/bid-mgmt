@@ -27,6 +27,7 @@
 - Admin user creation lives at `/admin` with optional bootstrap token.
 - Login/logout available at `/login` and via the navbar.
 - Password reset emails are sent via SMTP with a generic confirmation message.
+- Password reset requests are rate limited by email and IP.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 
@@ -85,6 +86,11 @@
   - `tokenHash` (unique)
   - `expiresAt`
   - `usedAt`
+- `PasswordResetRequest`
+  - `id` (cuid)
+  - `email`
+  - `ipAddress`
+  - `createdAt`
 
 ## Data Flow
 - `/bids/new` posts via a server action.
@@ -102,6 +108,7 @@
 - `/login` verifies credentials, creates a session, and writes a cookie.
 - `/forgot-password` accepts an email and always shows a generic confirmation.
 - `/reset-password` validates the token, updates the password, and clears sessions.
+- Password reset requests are tracked for rate limiting.
 
 ## Local Development
 1. Ensure `.env` contains `DATABASE_URL="file:./dev.db"`.

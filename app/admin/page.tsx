@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
-import { sendPasswordResetForEmail } from "@/lib/password-reset";
+import {
+  registerPasswordResetAttempt,
+  sendPasswordResetForEmail,
+} from "@/lib/password-reset";
+import { getRequestIp } from "@/lib/request-ip";
 
 const roleOptions = ["engineer", "supervisor", "bids", "admin"] as const;
 
@@ -100,8 +104,13 @@ async function requestPasswordReset(formData: FormData) {
   const email = String(formData.get("resetEmail") ?? "").trim().toLowerCase();
 
   if (email) {
+    const ipAddress = await getRequestIp();
+    const allowed = await registerPasswordResetAttempt(email, ipAddress);
+
     try {
-      await sendPasswordResetForEmail(email);
+      if (allowed) {
+        await sendPasswordResetForEmail(email);
+      }
     } catch (error) {
       console.error("Admin password reset email failed.", error);
     }

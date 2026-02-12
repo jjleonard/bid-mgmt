@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 
-import { sendPasswordResetForEmail } from "@/lib/password-reset";
+import {
+  registerPasswordResetAttempt,
+  sendPasswordResetForEmail,
+} from "@/lib/password-reset";
+import { getRequestIp } from "@/lib/request-ip";
 
 type PageProps = {
   searchParams?:
@@ -18,8 +22,13 @@ async function requestReset(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
 
   if (email) {
+    const ipAddress = await getRequestIp();
+    const allowed = await registerPasswordResetAttempt(email, ipAddress);
+
     try {
-      await sendPasswordResetForEmail(email);
+      if (allowed) {
+        await sendPasswordResetForEmail(email);
+      }
     } catch (error) {
       console.error("Password reset email failed.", error);
     }

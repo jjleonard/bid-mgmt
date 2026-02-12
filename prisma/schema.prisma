@@ -88,6 +88,13 @@ model PasswordResetToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model PasswordResetRequest {
+  id        String   @id @default(cuid())
+  email     String
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
 enum BidStatus {
   pending
   pipeline
