@@ -43,6 +43,12 @@ mkdir -p data branding
 docker compose up -d --build
 ```
 
+Optional wrapper:
+
+```bash
+./deploy.sh
+```
+
 ## Bootstrap the first admin
 If you are starting with an empty database, run the bootstrap command once:
 
@@ -65,6 +71,8 @@ If you prefer to skip npm entirely, use:
 ```bash
 docker compose run --rm app node scripts/bootstrap-admin.js
 ```
+
+Reminder: ensure `deploy/.env` is updated before running the bootstrap.
 
 You can remove the bootstrap values after the admin is created.
 
