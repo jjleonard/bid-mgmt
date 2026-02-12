@@ -33,7 +33,13 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-execSync("npx prisma migrate deploy", { stdio: "inherit" });
+execSync("npx prisma migrate deploy", {
+  stdio: "inherit",
+  env: {
+    ...process.env,
+    DATABASE_URL: process.env.DATABASE_URL || "file:/data/dev.db",
+  },
+});
 
 const email = String(process.env.ADMIN_BOOTSTRAP_EMAIL).trim().toLowerCase();
 const password = String(process.env.ADMIN_BOOTSTRAP_PASSWORD);
