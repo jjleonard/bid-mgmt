@@ -47,6 +47,8 @@
 - Added password confirmation field on reset form.
 - Added rate-limit feedback messaging and exposed rate limit env vars.
 - Added admin-only access guards for /admin and /bids routes with server-side checks.
+- Added branding settings with logo upload, footer details, and support email.
+- Added default footer branding and sticky footer layout.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.

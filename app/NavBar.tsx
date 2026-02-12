@@ -2,9 +2,10 @@ import { redirect } from "next/navigation";
 
 import ThemeToggle from "@/app/ThemeToggle";
 import { clearSession, getCurrentUser } from "@/lib/auth";
+import { getBranding } from "@/lib/branding";
 
 export default async function NavBar() {
-  const user = await getCurrentUser();
+  const [user, branding] = await Promise.all([getCurrentUser(), getBranding()]);
 
   async function handleLogout() {
     "use server";
@@ -16,11 +17,17 @@ export default async function NavBar() {
     <header className="border-b border-sand-200/80 bg-sand-50/90">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-4">
-          <a
-            href="/"
-            className="text-sm font-semibold uppercase tracking-[0.2em] text-ink-700"
-          >
-            App
+          <a href="/" className="flex items-center gap-3">
+            {branding?.logoPath ? (
+              <img
+                src={branding.logoPath}
+                alt={branding.companyName ? `${branding.companyName} logo` : "Company logo"}
+                className="h-8 w-auto"
+              />
+            ) : null}
+            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-ink-700">
+              {branding?.companyName ?? "App"}
+            </span>
           </a>
           <nav className="flex flex-wrap items-center gap-4 text-sm text-ink-600">
             <a href="/bids" className="transition hover:text-ink-900">

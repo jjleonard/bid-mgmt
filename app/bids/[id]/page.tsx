@@ -423,7 +423,7 @@ export default async function BidDetailsPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-sand-50 text-ink-900">
+    <div className="min-h-full bg-sand-50 text-ink-900">
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-10 px-6 py-16">
         <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-2">

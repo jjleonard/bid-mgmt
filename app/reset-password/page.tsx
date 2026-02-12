@@ -71,7 +71,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
   const error = Array.isArray(errorParam) ? errorParam[0] : errorParam;
 
   return (
-    <div className="min-h-screen bg-sand-50 text-ink-900">
+    <div className="min-h-full bg-sand-50 text-ink-900">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-16">
         <header className="flex flex-col gap-4">
           <div className="space-y-2">

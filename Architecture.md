@@ -30,6 +30,8 @@
 - Password reset requests are rate limited by email and IP.
 - Rate limit thresholds are configurable via environment variables.
 - Admin-only access enforced for `/admin` and `/bids` routes with server-side guards.
+- Branding settings control the navbar logo and footer company details.
+- Footer shows fallback branding when no custom settings are saved.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 
@@ -40,6 +42,7 @@
 - Bid status helpers: `lib/bids.ts`
 - Auth helpers: `lib/auth.ts`
 - Route guards: `app/admin/layout.tsx`, `app/bids/layout.tsx`
+- Branding helpers: `lib/branding.ts`
 - Password reset helpers: `lib/password-reset.ts`
 - Email helper: `lib/email.ts`
 - Routes:
@@ -53,6 +56,7 @@
   - `app/forgot-password/page.tsx` (request reset)
   - `app/reset-password/page.tsx` (set new password)
 - Shared nav: `app/NavBar.tsx`
+- Footer: `app/Footer.tsx`
 - Theme toggle: `app/ThemeToggle.tsx`
 
 ## Data Model
@@ -94,6 +98,11 @@
   - `email`
   - `ipAddress`
   - `createdAt`
+- `AppBranding`
+  - `companyName`
+  - `companyWebsite`
+  - `supportEmail`
+  - `logoPath`
 
 ## Data Flow
 - `/bids/new` posts via a server action.
@@ -113,6 +122,8 @@
 - `/reset-password` validates the token, updates the password, and clears sessions.
 - Password reset requests are tracked for rate limiting.
 - `/admin` and `/bids` pages require an admin session; exports enforce checks in route handlers.
+- `/admin` can update branding settings including logo uploads stored in `/public/branding`.
+- Support email is only rendered for signed-in users.
 
 ## Local Development
 1. Ensure `.env` contains `DATABASE_URL="file:./dev.db"`.

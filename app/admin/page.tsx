@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
+import crypto from "crypto";
+import path from "path";
+import { mkdir, writeFile } from "fs/promises";
 
 import bcrypt from "bcryptjs";
 
 import { requireAdminUser } from "@/lib/auth";
+import { getBranding, upsertBranding } from "@/lib/branding";
 import { prisma } from "@/lib/prisma";
 import {
   registerPasswordResetAttempt,
@@ -19,12 +23,16 @@ type PageProps = {
         error?: string | string[];
         resetSent?: string | string[];
         resetRateLimited?: string | string[];
+        brandingUpdated?: string | string[];
+        brandingError?: string | string[];
       }
     | Promise<{
         created?: string | string[];
         error?: string | string[];
         resetSent?: string | string[];
         resetRateLimited?: string | string[];
+        brandingUpdated?: string | string[];
+        brandingError?: string | string[];
       }>;
 };
 
@@ -127,19 +135,93 @@ async function requestPasswordReset(formData: FormData) {
   redirect(`/admin?${email && !allowed ? "resetRateLimited=1" : "resetSent=1"}`);
 }
 
+const allowedLogoTypes = new Map([
+  ["image/png", "png"],
+  ["image/jpeg", "jpg"],
+  ["image/webp", "webp"],
+  ["image/svg+xml", "svg"],
+]);
+
+async function updateBranding(formData: FormData) {
+  "use server";
+
+  await requireAdminUser();
+
+  const companyName = String(formData.get("companyName") ?? "").trim() || null;
+  const companyWebsite = String(formData.get("companyWebsite") ?? "").trim() || null;
+  const supportEmail = String(formData.get("supportEmail") ?? "").trim() || null;
+  const logoFile = formData.get("companyLogo");
+
+  if (companyWebsite) {
+    try {
+      new URL(companyWebsite);
+    } catch {
+      redirect(
+        "/admin?brandingError=" +
+          encodeURIComponent("Company website must be a valid URL.")
+      );
+    }
+  }
+
+  if (supportEmail && !supportEmail.includes("@")) {
+    redirect(
+      "/admin?brandingError=" +
+        encodeURIComponent("Support email must be a valid email address.")
+    );
+  }
+
+  let logoPath = (await getBranding())?.logoPath ?? null;
+
+  if (logoFile instanceof File && logoFile.size > 0) {
+    const extension = allowedLogoTypes.get(logoFile.type);
+
+    if (!extension) {
+      redirect(
+        "/admin?brandingError=" +
+          encodeURIComponent("Logo must be a PNG, JPG, SVG, or WebP image.")
+      );
+    }
+
+    const buffer = Buffer.from(await logoFile.arrayBuffer());
+    const fileName = `logo-${Date.now()}-${crypto.randomBytes(6).toString("hex")}.${extension}`;
+    const targetDir = path.join(process.cwd(), "public", "branding");
+    await mkdir(targetDir, { recursive: true });
+    await writeFile(path.join(targetDir, fileName), buffer);
+    logoPath = `/branding/${fileName}`;
+  }
+
+  await upsertBranding({
+    companyName,
+    companyWebsite,
+    supportEmail,
+    logoPath,
+  });
+
+  redirect("/admin?brandingUpdated=1");
+}
+
 export default async function AdminPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await Promise.resolve(searchParams);
   const createdParam = resolvedSearchParams?.created;
   const errorParam = resolvedSearchParams?.error;
   const resetSentParam = resolvedSearchParams?.resetSent;
   const resetRateLimitedParam = resolvedSearchParams?.resetRateLimited;
+  const brandingUpdatedParam = resolvedSearchParams?.brandingUpdated;
+  const brandingErrorParam = resolvedSearchParams?.brandingError;
   const created = Array.isArray(createdParam) ? createdParam[0] : createdParam;
   const error = Array.isArray(errorParam) ? errorParam[0] : errorParam;
   const resetSent = Array.isArray(resetSentParam) ? resetSentParam[0] : resetSentParam;
   const resetRateLimited = Array.isArray(resetRateLimitedParam)
     ? resetRateLimitedParam[0]
     : resetRateLimitedParam;
+  const brandingUpdated = Array.isArray(brandingUpdatedParam)
+    ? brandingUpdatedParam[0]
+    : brandingUpdatedParam;
+  const brandingError = Array.isArray(brandingErrorParam)
+    ? brandingErrorParam[0]
+    : brandingErrorParam;
   const bootstrapRequired = Boolean(process.env.ADMIN_BOOTSTRAP_TOKEN?.trim());
+  const branding = await getBranding();
 
   const recentUsers = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
@@ -155,7 +237,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   });
 
   return (
-    <div className="min-h-screen bg-sand-50 text-ink-900">
+    <div className="min-h-full bg-sand-50 text-ink-900">
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-10 px-6 py-16">
         <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-2">
@@ -283,6 +365,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
         ) : null}
 
+        {brandingError ? (
+          <div className="rounded-2xl border border-red-200 bg-white/80 px-6 py-4 text-sm text-red-700 shadow-sm">
+            {brandingError}
+          </div>
+        ) : null}
+
         {created ? (
           <div className="rounded-2xl border border-sand-200 bg-white/80 px-6 py-4 text-sm text-ink-700 shadow-sm">
             Created user: {created}
@@ -298,6 +386,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
         {resetRateLimited ? (
           <div className="rounded-2xl border border-sand-200 bg-white/80 px-6 py-4 text-sm text-ink-700 shadow-sm">
             Please try again later.
+          </div>
+        ) : null}
+
+        {brandingUpdated ? (
+          <div className="rounded-2xl border border-sand-200 bg-white/80 px-6 py-4 text-sm text-ink-700 shadow-sm">
+            Branding updated.
           </div>
         ) : null}
 
@@ -327,6 +421,83 @@ export default async function AdminPage({ searchParams }: PageProps) {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Branding</p>
+            <h2 className="text-lg font-semibold text-ink-900">Company details</h2>
+            <p className="text-sm text-ink-600">
+              Update the logo, footer text, and support contact.
+            </p>
+          </div>
+          <form action={updateBranding} className="mt-6 flex flex-col gap-5">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-ink-700" htmlFor="companyLogo">
+                Company logo
+              </label>
+              <input
+                id="companyLogo"
+                name="companyLogo"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="rounded-lg border border-sand-200 bg-white px-3 py-2 text-sm text-ink-700 shadow-sm"
+              />
+              {branding?.logoPath ? (
+                <div className="mt-2 flex items-center gap-3 text-xs text-ink-500">
+                  <img src={branding.logoPath} alt="Current logo" className="h-8 w-auto" />
+                  <span>Current logo</span>
+                </div>
+              ) : null}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-ink-700" htmlFor="companyName">
+                  Company name
+                </label>
+                <input
+                  id="companyName"
+                  name="companyName"
+                  defaultValue={branding?.companyName ?? ""}
+                  className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
+                />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-ink-700" htmlFor="companyWebsite">
+                  Company website
+                </label>
+                <input
+                  id="companyWebsite"
+                  name="companyWebsite"
+                  type="url"
+                  placeholder="https://example.com"
+                  defaultValue={branding?.companyWebsite ?? ""}
+                  className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-ink-700" htmlFor="supportEmail">
+                Support email (shown to signed-in users)
+              </label>
+              <input
+                id="supportEmail"
+                name="supportEmail"
+                type="email"
+                placeholder="support@example.com"
+                defaultValue={branding?.supportEmail ?? ""}
+                className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
+              />
+            </div>
+            <div className="flex items-center justify-end">
+              <button
+                type="submit"
+                className="inline-flex h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-sand-50 transition hover:bg-ink-700"
+              >
+                Save branding
+              </button>
+            </div>
+          </form>
         </section>
 
         <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">

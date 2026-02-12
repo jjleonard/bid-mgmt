@@ -95,6 +95,16 @@ model PasswordResetRequest {
   createdAt DateTime @default(now())
 }
 
+model AppBranding {
+  id             Int      @id @default(1)
+  companyName    String?
+  companyWebsite String?
+  supportEmail   String?
+  logoPath       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 enum BidStatus {
   pending
   pipeline
