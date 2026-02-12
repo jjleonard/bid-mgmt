@@ -26,6 +26,7 @@
 - Admin page includes a reset flow that deletes bids and audit history with a confirmation phrase.
 - Admin user creation lives at `/admin` with optional bootstrap token.
 - Login/logout available at `/login` and via the navbar.
+- Password reset emails are sent via SMTP with a generic confirmation message.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 
@@ -35,6 +36,8 @@
 - Prisma client: `lib/prisma.ts` (uses `@prisma/adapter-better-sqlite3`)
 - Bid status helpers: `lib/bids.ts`
 - Auth helpers: `lib/auth.ts`
+- Password reset helpers: `lib/password-reset.ts`
+- Email helper: `lib/email.ts`
 - Routes:
   - `app/page.tsx` (landing)
   - `app/bids/page.tsx` (list + filter)
@@ -43,6 +46,8 @@
   - `app/bids/admin/page.tsx` (CSV import)
   - `app/admin/page.tsx` (user creation)
   - `app/login/page.tsx` (login)
+  - `app/forgot-password/page.tsx` (request reset)
+  - `app/reset-password/page.tsx` (set new password)
 - Shared nav: `app/NavBar.tsx`
 - Theme toggle: `app/ThemeToggle.tsx`
 
@@ -74,6 +79,12 @@
   - `userId`
   - `token` (unique)
   - `expiresAt`
+- `PasswordResetToken`
+  - `id` (cuid)
+  - `userId`
+  - `tokenHash` (unique)
+  - `expiresAt`
+  - `usedAt`
 
 ## Data Flow
 - `/bids/new` posts via a server action.
@@ -89,6 +100,8 @@
 - `/bids/admin/export-audit` downloads audit events and changes as CSV.
 - `/admin` creates users (with optional `ADMIN_BOOTSTRAP_TOKEN` check).
 - `/login` verifies credentials, creates a session, and writes a cookie.
+- `/forgot-password` accepts an email and always shows a generic confirmation.
+- `/reset-password` validates the token, updates the password, and clears sessions.
 
 ## Local Development
 1. Ensure `.env` contains `DATABASE_URL="file:./dev.db"`.

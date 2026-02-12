@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
+import { sendPasswordResetForEmail } from "@/lib/password-reset";
 
 const roleOptions = ["engineer", "supervisor", "bids", "admin"] as const;
 
@@ -11,10 +12,12 @@ type PageProps = {
     | {
         created?: string | string[];
         error?: string | string[];
+        resetSent?: string | string[];
       }
     | Promise<{
         created?: string | string[];
         error?: string | string[];
+        resetSent?: string | string[];
       }>;
 };
 
@@ -91,12 +94,30 @@ async function createUser(formData: FormData) {
   redirect("/admin?created=" + encodeURIComponent(email));
 }
 
+async function requestPasswordReset(formData: FormData) {
+  "use server";
+
+  const email = String(formData.get("resetEmail") ?? "").trim().toLowerCase();
+
+  if (email) {
+    try {
+      await sendPasswordResetForEmail(email);
+    } catch (error) {
+      console.error("Admin password reset email failed.", error);
+    }
+  }
+
+  redirect("/admin?resetSent=1");
+}
+
 export default async function AdminPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await Promise.resolve(searchParams);
   const createdParam = resolvedSearchParams?.created;
   const errorParam = resolvedSearchParams?.error;
+  const resetSentParam = resolvedSearchParams?.resetSent;
   const created = Array.isArray(createdParam) ? createdParam[0] : createdParam;
   const error = Array.isArray(errorParam) ? errorParam[0] : errorParam;
+  const resetSent = Array.isArray(resetSentParam) ? resetSentParam[0] : resetSentParam;
   const bootstrapRequired = Boolean(process.env.ADMIN_BOOTSTRAP_TOKEN?.trim());
 
   const recentUsers = await prisma.user.findMany({
@@ -247,6 +268,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
         ) : null}
 
+        {resetSent ? (
+          <div className="rounded-2xl border border-sand-200 bg-white/80 px-6 py-4 text-sm text-ink-700 shadow-sm">
+            If this email address exists in the database, we have sent an email.
+          </div>
+        ) : null}
+
         <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Recent users</p>
@@ -273,6 +300,38 @@ export default async function AdminPage({ searchParams }: PageProps) {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Password reset</p>
+            <h2 className="text-lg font-semibold text-ink-900">Send reset email</h2>
+            <p className="text-sm text-ink-600">
+              Send a password reset email on behalf of a user.
+            </p>
+          </div>
+          <form action={requestPasswordReset} className="mt-6 flex flex-col gap-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-ink-700" htmlFor="resetEmail">
+                User email address
+              </label>
+              <input
+                id="resetEmail"
+                name="resetEmail"
+                type="email"
+                required
+                className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
+              />
+            </div>
+            <div className="flex items-center justify-end">
+              <button
+                type="submit"
+                className="inline-flex h-11 items-center justify-center rounded-full border border-ink-200 bg-white px-6 text-sm font-semibold text-ink-700 transition hover:border-ink-300"
+              >
+                Send reset email
+              </button>
+            </div>
+          </form>
         </section>
       </main>
     </div>

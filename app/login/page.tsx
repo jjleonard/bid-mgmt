@@ -9,9 +9,11 @@ type PageProps = {
   searchParams?:
     | {
         error?: string | string[];
+        reset?: string | string[];
       }
     | Promise<{
         error?: string | string[];
+        reset?: string | string[];
       }>;
 };
 
@@ -46,7 +48,9 @@ async function login(formData: FormData) {
 export default async function LoginPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await Promise.resolve(searchParams);
   const errorParam = resolvedSearchParams?.error;
+  const resetParam = resolvedSearchParams?.reset;
   const error = Array.isArray(errorParam) ? errorParam[0] : errorParam;
+  const reset = Array.isArray(resetParam) ? resetParam[0] : resetParam;
 
   return (
     <div className="min-h-screen bg-sand-50 text-ink-900">
@@ -89,7 +93,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
               />
             </div>
 
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between text-sm">
+              <a href="/forgot-password" className="text-ink-500 transition hover:text-ink-700">
+                Forgot password?
+              </a>
               <button
                 type="submit"
                 className="inline-flex h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-sm font-semibold text-sand-50 transition hover:bg-ink-700"
@@ -99,6 +106,12 @@ export default async function LoginPage({ searchParams }: PageProps) {
             </div>
           </form>
         </section>
+
+        {reset ? (
+          <div className="rounded-2xl border border-sand-200 bg-white/80 px-6 py-4 text-sm text-ink-700 shadow-sm">
+            Password updated. Please log in with your new password.
+          </div>
+        ) : null}
 
         {error ? (
           <div className="rounded-2xl border border-red-200 bg-white/80 px-6 py-4 text-sm text-red-700 shadow-sm">

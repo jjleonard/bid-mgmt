@@ -40,6 +40,9 @@
 - Introduced a shared navbar with user display and navigation.
 - Moved the theme toggle into the navbar and removed per-page toggles.
 - Updated the landing page copy to a generic app entry point.
+- Added password reset token model and reset email flow scaffolding.
+- Added `/forgot-password` and `/reset-password` pages.
+- Added admin-triggered password reset email action.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.

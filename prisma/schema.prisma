@@ -66,6 +66,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   sessions     Session[]
+  passwordResets PasswordResetToken[]
 }
 
 model Session {
@@ -74,6 +75,16 @@ model Session {
   token     String   @unique
   createdAt DateTime @default(now())
   expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
