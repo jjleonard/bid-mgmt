@@ -20,6 +20,7 @@ services:
     restart: unless-stopped
     env_file:
       - deploy/.env
-    command: sh -c "tunnel --no-autoupdate run --token $$CLOUDFLARE_TUNNEL_TOKEN"
+    entrypoint: /bin/sh -c
+    command: "cloudflared tunnel --no-autoupdate run --token $CLOUDFLARE_TUNNEL_TOKEN"
     depends_on:
       - app
