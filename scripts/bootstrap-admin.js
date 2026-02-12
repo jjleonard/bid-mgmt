@@ -17,13 +17,16 @@ if (!process.env.DATABASE_URL) {
 }
 
 const { PrismaClient } = require("@prisma/client");
+const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+
+const databaseUrl = process.env.DATABASE_URL || "file:/data/dev.db";
+const databaseFile = databaseUrl.startsWith("file:")
+  ? databaseUrl.replace("file:", "")
+  : databaseUrl;
 
 const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL || "file:/data/dev.db",
-    },
-  },
+  adapter: new PrismaBetterSqlite3({ url: databaseFile }),
+  log: ["error", "warn"],
 });
 
 const required = [
