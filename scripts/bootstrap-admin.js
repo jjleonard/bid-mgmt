@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
-const { PrismaClient } = require("@prisma/client");
 const { execSync } = require("child_process");
 
 const deployEnvPath = path.join(process.cwd(), "deploy", ".env");
@@ -17,7 +16,15 @@ if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = "file:/data/dev.db";
 }
 
-const prisma = new PrismaClient();
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL || "file:/data/dev.db",
+    },
+  },
+});
 
 const required = [
   "ADMIN_BOOTSTRAP_EMAIL",
