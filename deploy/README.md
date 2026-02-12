@@ -101,6 +101,13 @@ docker compose up -d --build
 - View logs: `docker compose logs -f app`
 - Stop: `docker compose down`
 
+## Deployment checklist
+1. `deploy/.env` updated (SMTP, APP_BASE_URL, CLOUDFLARE_TUNNEL_TOKEN).
+2. `data/` and `branding/` folders created.
+3. `./deploy.sh` run (or `docker compose up -d --build`).
+4. Bootstrap admin run if needed.
+5. Cloudflare route points to `http://app:3000`.
+
 ## Cloudflare tunnel route
 In the Cloudflare dashboard, set the route/service to:
 
