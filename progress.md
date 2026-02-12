@@ -49,6 +49,8 @@
 - Added admin-only access guards for /admin and /bids routes with server-side checks.
 - Added branding settings with logo upload, footer details, and support email.
 - Added default footer branding and sticky footer layout.
+- Added Docker deployment setup with Cloudflare Tunnel support.
+- Added admin bootstrap command for fresh deployments.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.

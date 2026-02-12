@@ -32,6 +32,7 @@
 - Admin-only access enforced for `/admin` and `/bids` routes with server-side guards.
 - Branding settings control the navbar logo and footer company details.
 - Footer shows fallback branding when no custom settings are saved.
+- Docker deployment available with Cloudflare Tunnel companion container.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 
@@ -43,6 +44,8 @@
 - Auth helpers: `lib/auth.ts`
 - Route guards: `app/admin/layout.tsx`, `app/bids/layout.tsx`
 - Branding helpers: `lib/branding.ts`
+- Deployment: `Dockerfile`, `docker-compose.yml`, `deploy/README.md`
+- Bootstrap admin: `scripts/bootstrap-admin.js`
 - Password reset helpers: `lib/password-reset.ts`
 - Email helper: `lib/email.ts`
 - Routes:
@@ -124,6 +127,7 @@
 - `/admin` and `/bids` pages require an admin session; exports enforce checks in route handlers.
 - `/admin` can update branding settings including logo uploads stored in `/public/branding`.
 - Support email is only rendered for signed-in users.
+- Docker entrypoint runs Prisma migrations on container startup.
 
 ## Local Development
 1. Ensure `.env` contains `DATABASE_URL="file:./dev.db"`.

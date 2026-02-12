@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.DS_Store
+dev.db
+dev.db-journal
+coverage
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+public/branding

@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: bid-mgmt-app
+    restart: unless-stopped
+    env_file:
+      - deploy/.env
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - ./data:/data
+      - ./branding:/app/public/branding
+    ports:
+      - "3000:3000"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: bid-mgmt-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app

@@ -17,6 +17,8 @@
 /.next/
 /out/
 /public/branding/
+/data/
+/branding/
 
 # production
 /build
@@ -35,6 +37,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!deploy/.env.example
 
 # vercel
 .vercel
