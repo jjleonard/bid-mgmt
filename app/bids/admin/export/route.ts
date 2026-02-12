@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 const headers = [
   "id",
@@ -36,6 +37,12 @@ function csvEscape(value: string) {
 }
 
 export async function GET() {
+  const user = await getCurrentUser();
+
+  if (!user || user.role !== "admin") {
+    return new Response("Unauthorized", { status: 302, headers: { Location: "/login" } });
+  }
+
   const bids = await prisma.bid.findMany({
     orderBy: { createdAt: "desc" },
   });

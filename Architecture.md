@@ -29,6 +29,7 @@
 - Password reset emails are sent via SMTP with a generic confirmation message.
 - Password reset requests are rate limited by email and IP.
 - Rate limit thresholds are configurable via environment variables.
+- Admin-only access enforced for `/admin` and `/bids` routes with server-side guards.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 
@@ -38,6 +39,7 @@
 - Prisma client: `lib/prisma.ts` (uses `@prisma/adapter-better-sqlite3`)
 - Bid status helpers: `lib/bids.ts`
 - Auth helpers: `lib/auth.ts`
+- Route guards: `app/admin/layout.tsx`, `app/bids/layout.tsx`
 - Password reset helpers: `lib/password-reset.ts`
 - Email helper: `lib/email.ts`
 - Routes:
@@ -110,6 +112,7 @@
 - `/forgot-password` accepts an email and always shows a generic confirmation.
 - `/reset-password` validates the token, updates the password, and clears sessions.
 - Password reset requests are tracked for rate limiting.
+- `/admin` and `/bids` pages require an admin session; exports enforce checks in route handlers.
 
 ## Local Development
 1. Ensure `.env` contains `DATABASE_URL="file:./dev.db"`.

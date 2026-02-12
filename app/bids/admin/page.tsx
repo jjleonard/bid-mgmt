@@ -9,6 +9,7 @@ import {
 } from "@/lib/bids";
 import { parseCsv } from "@/lib/csv";
 import { prisma } from "@/lib/prisma";
+import { requireAdminUser } from "@/lib/auth";
 
 type PageProps = {
   searchParams?:
@@ -141,6 +142,8 @@ function parseOptionalInt(value: string) {
 
 async function importCsv(formData: FormData) {
   "use server";
+
+  await requireAdminUser();
 
   const file = formData.get("file");
 
@@ -328,6 +331,8 @@ async function importCsv(formData: FormData) {
 async function deleteAllBids(formData: FormData) {
   "use server";
 
+  await requireAdminUser();
+
   const phrase = String(formData.get("confirm") ?? "").trim();
 
   if (phrase !== "DELETE ALL BIDS") {
@@ -344,6 +349,7 @@ async function deleteAllBids(formData: FormData) {
 }
 
 export default async function BidsAdminPage({ searchParams }: PageProps) {
+  await requireAdminUser();
   const resolvedSearchParams = await Promise.resolve(searchParams);
   const insertedParam = resolvedSearchParams?.inserted;
   const skippedParam = resolvedSearchParams?.skipped;

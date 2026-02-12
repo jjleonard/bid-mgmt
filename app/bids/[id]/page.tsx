@@ -9,6 +9,7 @@ import {
   opportunityTypeValues,
   tcvTermBasisValues,
 } from "@/lib/bids";
+import { requireAdminUser } from "@/lib/auth";
 import BidDetailsEditor from "@/app/bids/[id]/BidDetailsEditor";
 
 type PageProps = {
@@ -16,6 +17,7 @@ type PageProps = {
 };
 
 export default async function BidDetailsPage({ params }: PageProps) {
+  await requireAdminUser();
   const resolvedParams = await Promise.resolve(params);
   const bid = await prisma.bid.findUnique({
     where: { id: resolvedParams.id },
@@ -81,6 +83,8 @@ export default async function BidDetailsPage({ params }: PageProps) {
 
   async function updateBid(formData: FormData) {
     "use server";
+
+    await requireAdminUser();
 
     const id = String(formData.get("id") ?? "");
     const clientName = String(formData.get("clientName") ?? "").trim();
@@ -341,6 +345,8 @@ export default async function BidDetailsPage({ params }: PageProps) {
 
   async function deleteBid(formData: FormData) {
     "use server";
+
+    await requireAdminUser();
 
     const id = String(formData.get("id") ?? "");
 

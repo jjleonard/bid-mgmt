@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import bcrypt from "bcryptjs";
 
+import { requireAdminUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   registerPasswordResetAttempt,
@@ -29,6 +30,8 @@ type PageProps = {
 
 async function createUser(formData: FormData) {
   "use server";
+
+  await requireAdminUser();
 
   const firstName = String(formData.get("firstName") ?? "").trim();
   const surname = String(formData.get("surname") ?? "").trim();
@@ -102,6 +105,8 @@ async function createUser(formData: FormData) {
 
 async function requestPasswordReset(formData: FormData) {
   "use server";
+
+  await requireAdminUser();
 
   const email = String(formData.get("resetEmail") ?? "").trim().toLowerCase();
   let allowed = true;

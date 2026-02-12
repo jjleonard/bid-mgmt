@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 
@@ -93,4 +94,14 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   }
 
   return session.user;
+}
+
+export async function requireAdminUser() {
+  const user = await getCurrentUser();
+
+  if (!user || user.role !== "admin") {
+    throw redirect("/login");
+  }
+
+  return user;
 }

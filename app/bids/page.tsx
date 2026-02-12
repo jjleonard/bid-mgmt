@@ -1,5 +1,6 @@
 import { bidStatusOptions, bidStatusValues, getBidStatusLabel } from "@/lib/bids";
 import { prisma } from "@/lib/prisma";
+import { requireAdminUser } from "@/lib/auth";
 import ClientSort from "@/app/bids/ClientSort";
 import StatusFilter from "@/app/bids/StatusFilter";
 import SearchFilter from "@/app/bids/SearchFilter";
@@ -33,6 +34,7 @@ type BidRow = {
 };
 
 export default async function BidsPage({ searchParams }: PageProps) {
+  await requireAdminUser();
   const resolvedSearchParams = await Promise.resolve(searchParams);
   const rawStatus = resolvedSearchParams?.status;
   const statusFilter = Array.isArray(rawStatus) ? rawStatus[0] : rawStatus;

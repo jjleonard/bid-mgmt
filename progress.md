@@ -46,9 +46,9 @@
 - Added rate limiting for password reset requests by email and IP.
 - Added password confirmation field on reset form.
 - Added rate-limit feedback messaging and exposed rate limit env vars.
+- Added admin-only access guards for /admin and /bids routes with server-side checks.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.
 - Add edit/delete flows for full CRUD.
-- Protect routes and enforce role-based access.
 - Add password reset or admin password rotation.

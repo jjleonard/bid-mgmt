@@ -8,12 +8,15 @@ import {
   tcvTermBasisValues,
 } from "@/lib/bids";
 import { prisma } from "@/lib/prisma";
+import { requireAdminUser } from "@/lib/auth";
 import BidForm from "@/app/bids/new/BidForm";
 
 const pageTitle = "New bid";
 
 async function createBid(formData: FormData) {
   "use server";
+
+  await requireAdminUser();
 
   const clientName = String(formData.get("clientName") ?? "").trim();
   const bidName = String(formData.get("bidName") ?? "").trim();
