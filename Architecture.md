@@ -28,6 +28,7 @@
 - Login/logout available at `/login` and via the navbar.
 - Password reset emails are sent via SMTP with a generic confirmation message.
 - Password reset requests are rate limited by email and IP.
+- Rate limit thresholds are configurable via environment variables.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 

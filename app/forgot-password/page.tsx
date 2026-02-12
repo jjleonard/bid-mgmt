@@ -10,9 +10,11 @@ type PageProps = {
   searchParams?:
     | {
         sent?: string | string[];
+        rateLimited?: string | string[];
       }
     | Promise<{
         sent?: string | string[];
+        rateLimited?: string | string[];
       }>;
 };
 
@@ -20,10 +22,11 @@ async function requestReset(formData: FormData) {
   "use server";
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  let allowed = true;
 
   if (email) {
     const ipAddress = await getRequestIp();
-    const allowed = await registerPasswordResetAttempt(email, ipAddress);
+    allowed = await registerPasswordResetAttempt(email, ipAddress);
 
     try {
       if (allowed) {
@@ -34,13 +37,15 @@ async function requestReset(formData: FormData) {
     }
   }
 
-  redirect("/forgot-password?sent=1");
+  redirect(`/forgot-password?${email && !allowed ? "rateLimited=1" : "sent=1"}`);
 }
 
 export default async function ForgotPasswordPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await Promise.resolve(searchParams);
   const sentParam = resolvedSearchParams?.sent;
+  const rateLimitedParam = resolvedSearchParams?.rateLimited;
   const sent = Array.isArray(sentParam) ? sentParam[0] : sentParam;
+  const rateLimited = Array.isArray(rateLimitedParam) ? rateLimitedParam[0] : rateLimitedParam;
 
   return (
     <div className="min-h-screen bg-sand-50 text-ink-900">
@@ -87,6 +92,12 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
         {sent ? (
           <div className="rounded-2xl border border-sand-200 bg-white/80 px-6 py-4 text-sm text-ink-700 shadow-sm">
             If this email address exists in the database, we have sent an email.
+          </div>
+        ) : null}
+
+        {rateLimited ? (
+          <div className="rounded-2xl border border-sand-200 bg-white/80 px-6 py-4 text-sm text-ink-700 shadow-sm">
+            Please try again later.
           </div>
         ) : null}
       </main>

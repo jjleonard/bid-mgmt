@@ -17,11 +17,13 @@ type PageProps = {
         created?: string | string[];
         error?: string | string[];
         resetSent?: string | string[];
+        resetRateLimited?: string | string[];
       }
     | Promise<{
         created?: string | string[];
         error?: string | string[];
         resetSent?: string | string[];
+        resetRateLimited?: string | string[];
       }>;
 };
 
@@ -102,10 +104,11 @@ async function requestPasswordReset(formData: FormData) {
   "use server";
 
   const email = String(formData.get("resetEmail") ?? "").trim().toLowerCase();
+  let allowed = true;
 
   if (email) {
     const ipAddress = await getRequestIp();
-    const allowed = await registerPasswordResetAttempt(email, ipAddress);
+    allowed = await registerPasswordResetAttempt(email, ipAddress);
 
     try {
       if (allowed) {
@@ -116,7 +119,7 @@ async function requestPasswordReset(formData: FormData) {
     }
   }
 
-  redirect("/admin?resetSent=1");
+  redirect(`/admin?${email && !allowed ? "resetRateLimited=1" : "resetSent=1"}`);
 }
 
 export default async function AdminPage({ searchParams }: PageProps) {
@@ -124,9 +127,13 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const createdParam = resolvedSearchParams?.created;
   const errorParam = resolvedSearchParams?.error;
   const resetSentParam = resolvedSearchParams?.resetSent;
+  const resetRateLimitedParam = resolvedSearchParams?.resetRateLimited;
   const created = Array.isArray(createdParam) ? createdParam[0] : createdParam;
   const error = Array.isArray(errorParam) ? errorParam[0] : errorParam;
   const resetSent = Array.isArray(resetSentParam) ? resetSentParam[0] : resetSentParam;
+  const resetRateLimited = Array.isArray(resetRateLimitedParam)
+    ? resetRateLimitedParam[0]
+    : resetRateLimitedParam;
   const bootstrapRequired = Boolean(process.env.ADMIN_BOOTSTRAP_TOKEN?.trim());
 
   const recentUsers = await prisma.user.findMany({
@@ -280,6 +287,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
         {resetSent ? (
           <div className="rounded-2xl border border-sand-200 bg-white/80 px-6 py-4 text-sm text-ink-700 shadow-sm">
             If this email address exists in the database, we have sent an email.
+          </div>
+        ) : null}
+
+        {resetRateLimited ? (
+          <div className="rounded-2xl border border-sand-200 bg-white/80 px-6 py-4 text-sm text-ink-700 shadow-sm">
+            Please try again later.
           </div>
         ) : null}
 

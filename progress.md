@@ -45,6 +45,7 @@
 - Added admin-triggered password reset email action.
 - Added rate limiting for password reset requests by email and IP.
 - Added password confirmation field on reset form.
+- Added rate-limit feedback messaging and exposed rate limit env vars.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.
