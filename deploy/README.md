@@ -49,6 +49,15 @@ Optional wrapper:
 ./deploy.sh
 ```
 
+Note: the Cloudflare tunnel token must be available as an environment variable
+when running Compose. `deploy.sh` loads `deploy/.env` for you. If you run Compose
+directly, export it first:
+
+```bash
+export CLOUDFLARE_TUNNEL_TOKEN=your-token
+docker compose up -d --build
+```
+
 ## Bootstrap the first admin
 If you are starting with an empty database, run the bootstrap command once:
 

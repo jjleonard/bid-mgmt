@@ -18,9 +18,6 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: bid-mgmt-tunnel
     restart: unless-stopped
-    env_file:
-      - deploy/.env
-    entrypoint: /bin/sh -c
-    command: "cloudflared tunnel --no-autoupdate run --token $CLOUDFLARE_TUNNEL_TOKEN"
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - app

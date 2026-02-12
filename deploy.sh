@@ -8,6 +8,10 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
+set -a
+. "$ENV_FILE"
+set +a
+
 echo "Building and starting containers..."
 docker compose up -d --build
 
