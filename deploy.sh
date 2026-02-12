@@ -13,6 +13,7 @@ set -a
 set +a
 
 echo "Building and starting containers..."
+docker compose down
 docker compose up -d --build
 
 if [ "$1" = "--bootstrap" ]; then
