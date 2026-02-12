@@ -2,6 +2,9 @@ FROM node:20-bullseye AS builder
 
 WORKDIR /app
 
+ENV DATABASE_URL="file:./dev.db"
+ENV PRISMA_TELEMETRY_DISABLED=1
+
 COPY package.json package-lock.json ./
 RUN npm ci
 
