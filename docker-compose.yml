@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   app:
     build: .
@@ -20,6 +18,8 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: bid-mgmt-tunnel
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    env_file:
+      - deploy/.env
+    command: sh -c "tunnel --no-autoupdate run --token $$CLOUDFLARE_TUNNEL_TOKEN"
     depends_on:
       - app

@@ -13,6 +13,10 @@ if (fs.existsSync(deployEnvPath)) {
   dotenv.config();
 }
 
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = "file:/data/dev.db";
+}
+
 const prisma = new PrismaClient();
 
 const required = [
