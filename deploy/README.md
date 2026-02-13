@@ -54,6 +54,9 @@ Flags:
 - `--no-down` skip `docker compose down`.
 - `--bootstrap` run admin bootstrap after deploy.
 
+By default, `deploy.sh` pulls the latest code, restarts containers, and rebuilds
+the app image.
+
 Note: the Cloudflare tunnel token must be available as an environment variable
 when running Compose. `deploy.sh` loads `deploy/.env` for you. If you run Compose
 directly, export it first:
