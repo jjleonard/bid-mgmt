@@ -84,7 +84,8 @@ export default async function BidDetailsPage({ params }: PageProps) {
   async function updateBid(formData: FormData) {
     "use server";
 
-    await requireAdminUser();
+    const user = await requireAdminUser();
+    const actor = [user.firstName, user.surname].filter(Boolean).join(" ") || user.email;
 
     const id = String(formData.get("id") ?? "");
     const clientName = String(formData.get("clientName") ?? "").trim();
@@ -327,6 +328,7 @@ export default async function BidDetailsPage({ params }: PageProps) {
           bidId: id,
           bidIdSnapshot: id,
           bidLabel: `${clientName} · ${bidName}`,
+          actor,
         },
       });
 
@@ -346,7 +348,8 @@ export default async function BidDetailsPage({ params }: PageProps) {
   async function deleteBid(formData: FormData) {
     "use server";
 
-    await requireAdminUser();
+    const user = await requireAdminUser();
+    const actor = [user.firstName, user.surname].filter(Boolean).join(" ") || user.email;
 
     const id = String(formData.get("id") ?? "");
 
@@ -402,6 +405,7 @@ export default async function BidDetailsPage({ params }: PageProps) {
           bidIdSnapshot: id,
           bidLabel: `${currentBid.clientName} · ${currentBid.bidName}`,
           action: "delete",
+          actor,
         },
       });
 

@@ -56,6 +56,7 @@
 - Reordered admin password reset card under recent users.
 - Simplified bid list columns for mobile screens.
 - Streamlined deploy script to pull, rebuild, and optionally bootstrap.
+- Added audit actor attribution for logged-in users.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.
