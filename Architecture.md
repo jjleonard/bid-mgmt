@@ -35,6 +35,7 @@
 - Docker deployment available with Cloudflare Tunnel companion container.
 - Cloudflare tunnel routes target the app service at `http://app:3000`.
 - Theme transitions are disabled to avoid uneven light/dark switching.
+- Deploy script can pull, restart containers, and optionally bootstrap admin.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 
