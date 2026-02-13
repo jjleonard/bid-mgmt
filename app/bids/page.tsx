@@ -112,16 +112,16 @@ export default async function BidsPage({ searchParams }: PageProps) {
 
         <section className="overflow-hidden rounded-2xl border border-sand-200 bg-white/80 shadow-sm">
           <div className="grid grid-cols-12 gap-4 border-b border-sand-200 px-6 py-4">
-            <span className="col-span-3 text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
+            <span className="col-span-6 md:col-span-3 text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
               <ClientSort active={isClientSort} direction={clientSortDirection} />
             </span>
-            <span className="col-span-4 text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
+            <span className="col-span-6 md:col-span-4 text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
               Bid
             </span>
-            <span className="col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
+            <span className="hidden md:block md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
               Status
             </span>
-            <span className="col-span-3 text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
+            <span className="hidden md:block md:col-span-3 text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
               Folder
             </span>
           </div>
@@ -140,10 +140,10 @@ export default async function BidsPage({ searchParams }: PageProps) {
                     index % 2 === 0 ? "bg-sand-50/60" : "bg-transparent"
                   }`}
                 >
-                  <span className="col-span-3 font-medium text-ink-900">
+                  <span className="col-span-6 md:col-span-3 font-medium text-ink-900">
                     {bid.clientName}
                   </span>
-                  <span className="col-span-4">
+                  <span className="col-span-6 md:col-span-4">
                     <a
                       href={`/bids/${bid.id}`}
                       className="font-medium text-ink-900 underline-offset-4 hover:underline"
@@ -151,10 +151,10 @@ export default async function BidsPage({ searchParams }: PageProps) {
                       {bid.bidName}
                     </a>
                   </span>
-                  <span className="col-span-2 capitalize">
+                  <span className="hidden md:block md:col-span-2 capitalize">
                     {getBidStatusLabel(bid.status as (typeof bidStatusValues)[number])}
                   </span>
-                  <span className="col-span-3 truncate">
+                  <span className="hidden md:block md:col-span-3 truncate">
                     <a
                       href={bid.folderUrl}
                       className="text-ink-700 underline-offset-4 hover:underline"

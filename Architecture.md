@@ -34,6 +34,7 @@
 - Footer shows fallback branding when no custom settings are saved.
 - Docker deployment available with Cloudflare Tunnel companion container.
 - Cloudflare tunnel routes target the app service at `http://app:3000`.
+- Theme transitions are disabled to avoid uneven light/dark switching.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 
@@ -129,6 +130,7 @@
 - `/admin` can update branding settings including logo uploads stored in `/public/branding`.
 - Support email is only rendered for signed-in users.
 - Docker entrypoint runs Prisma migrations on container startup.
+- Bid list hides status and folder columns on small screens.
 
 ## Local Development
 1. Ensure `.env` contains `DATABASE_URL="file:./dev.db"`.

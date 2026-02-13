@@ -27,7 +27,12 @@ body {
   background: var(--sand-50);
   color: var(--ink-900);
   font-family: var(--font-geist-sans);
-  transition: background-color 700ms ease;
+}
+
+[data-theme] *,
+[data-theme] *::before,
+[data-theme] *::after {
+  transition: none !important;
 }
 
 h1,

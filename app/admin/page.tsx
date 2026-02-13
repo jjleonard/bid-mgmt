@@ -425,6 +425,38 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
         <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">
           <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Password reset</p>
+            <h2 className="text-lg font-semibold text-ink-900">Send reset email</h2>
+            <p className="text-sm text-ink-600">
+              Send a password reset email on behalf of a user.
+            </p>
+          </div>
+          <form action={requestPasswordReset} className="mt-6 flex flex-col gap-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-ink-700" htmlFor="resetEmail">
+                User email address
+              </label>
+              <input
+                id="resetEmail"
+                name="resetEmail"
+                type="email"
+                required
+                className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
+              />
+            </div>
+            <div className="flex items-center justify-end">
+              <button
+                type="submit"
+                className="inline-flex h-11 items-center justify-center rounded-full border border-ink-200 bg-white px-6 text-sm font-semibold text-ink-700 transition hover:border-ink-300"
+              >
+                Send reset email
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">
+          <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Branding</p>
             <h2 className="text-lg font-semibold text-ink-900">Company details</h2>
             <p className="text-sm text-ink-600">
@@ -500,37 +532,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </form>
         </section>
 
-        <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Password reset</p>
-            <h2 className="text-lg font-semibold text-ink-900">Send reset email</h2>
-            <p className="text-sm text-ink-600">
-              Send a password reset email on behalf of a user.
-            </p>
-          </div>
-          <form action={requestPasswordReset} className="mt-6 flex flex-col gap-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium text-ink-700" htmlFor="resetEmail">
-                User email address
-              </label>
-              <input
-                id="resetEmail"
-                name="resetEmail"
-                type="email"
-                required
-                className="h-11 rounded-lg border border-sand-200 bg-white px-3 text-base text-ink-900 shadow-sm outline-none transition focus:border-ink-400"
-              />
-            </div>
-            <div className="flex items-center justify-end">
-              <button
-                type="submit"
-                className="inline-flex h-11 items-center justify-center rounded-full border border-ink-200 bg-white px-6 text-sm font-semibold text-ink-700 transition hover:border-ink-300"
-              >
-                Send reset email
-              </button>
-            </div>
-          </form>
-        </section>
       </main>
     </div>
   );

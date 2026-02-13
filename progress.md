@@ -52,6 +52,9 @@
 - Added Docker deployment setup with Cloudflare Tunnel support.
 - Added admin bootstrap command for fresh deployments.
 - Documented Cloudflare tunnel route configuration.
+- Removed theme transitions for consistent light/dark switching.
+- Reordered admin password reset card under recent users.
+- Simplified bid list columns for mobile screens.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.
