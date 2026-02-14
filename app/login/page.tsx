@@ -35,6 +35,10 @@ async function login(formData: FormData) {
     redirect("/login?error=" + encodeURIComponent("Invalid email or password."));
   }
 
+  if (user.disabledAt) {
+    redirect("/login?error=" + encodeURIComponent("Account is disabled."));
+  }
+
   const isValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!isValid) {

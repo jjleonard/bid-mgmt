@@ -63,6 +63,7 @@ model User {
   email        String   @unique
   role         Role
   passwordHash String
+  disabledAt   DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   sessions     Session[]

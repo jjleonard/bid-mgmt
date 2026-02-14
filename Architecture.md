@@ -37,6 +37,7 @@
 - Theme transitions are disabled to avoid uneven light/dark switching.
 - Deploy script can pull, restart containers, and optionally bootstrap admin.
 - Audit events record the logged-in user as the actor.
+- User accounts can be disabled and managed via `/users/[id]`.
 - Statuses include pending, in progress, bid, no bid, submitted, won, lost, dropped, abandoned.
   - Added pipeline.
 
@@ -88,6 +89,7 @@
   - `email` (unique)
   - `role` (enum)
   - `passwordHash`
+  - `disabledAt`
   - `createdAt`, `updatedAt`
 - `Session`
   - `id` (cuid)

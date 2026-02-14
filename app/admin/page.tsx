@@ -25,6 +25,8 @@ type PageProps = {
         resetRateLimited?: string | string[];
         brandingUpdated?: string | string[];
         brandingError?: string | string[];
+        page?: string | string[];
+        showDisabled?: string | string[];
       }
     | Promise<{
         created?: string | string[];
@@ -33,6 +35,8 @@ type PageProps = {
         resetRateLimited?: string | string[];
         brandingUpdated?: string | string[];
         brandingError?: string | string[];
+        page?: string | string[];
+        showDisabled?: string | string[];
       }>;
 };
 
@@ -208,6 +212,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const resetRateLimitedParam = resolvedSearchParams?.resetRateLimited;
   const brandingUpdatedParam = resolvedSearchParams?.brandingUpdated;
   const brandingErrorParam = resolvedSearchParams?.brandingError;
+  const pageParam = resolvedSearchParams?.page;
+  const showDisabledParam = resolvedSearchParams?.showDisabled;
   const created = Array.isArray(createdParam) ? createdParam[0] : createdParam;
   const error = Array.isArray(errorParam) ? errorParam[0] : errorParam;
   const resetSent = Array.isArray(resetSentParam) ? resetSentParam[0] : resetSentParam;
@@ -220,18 +226,32 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const brandingError = Array.isArray(brandingErrorParam)
     ? brandingErrorParam[0]
     : brandingErrorParam;
+  const rawPage = Array.isArray(pageParam) ? pageParam[0] : pageParam;
+  const pageNumber = rawPage ? Number(rawPage) : 1;
+  const pageSize = 10;
+  const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
+  const showDisabled = Array.isArray(showDisabledParam)
+    ? showDisabledParam[0] === "1"
+    : showDisabledParam === "1";
   const bootstrapRequired = Boolean(process.env.ADMIN_BOOTSTRAP_TOKEN?.trim());
   const branding = await getBranding();
-
-  const recentUsers = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 5,
+  const totalUsers = await prisma.user.count({
+    where: showDisabled ? undefined : { disabledAt: null },
+  });
+  const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const users = await prisma.user.findMany({
+    where: showDisabled ? undefined : { disabledAt: null },
+    orderBy: [{ disabledAt: "asc" }, { createdAt: "desc" }],
+    skip: (safePage - 1) * pageSize,
+    take: pageSize,
     select: {
       id: true,
       firstName: true,
       surname: true,
       email: true,
       role: true,
+      disabledAt: true,
       createdAt: true,
     },
   });
@@ -397,13 +417,13 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
         <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Recent users</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-500">All users</p>
           </div>
-          {recentUsers.length === 0 ? (
+          {users.length === 0 ? (
             <p className="mt-6 text-sm text-ink-600">No users created yet.</p>
           ) : (
             <div className="mt-6 space-y-4">
-              {recentUsers.map((user) => (
+              {users.map((user) => (
                 <div
                   key={user.id}
                   className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sand-100 bg-sand-50/60 px-4 py-3 text-sm text-ink-700"
@@ -413,6 +433,18 @@ export default async function AdminPage({ searchParams }: PageProps) {
                       {user.firstName} {user.surname}
                     </span>
                     <span className="text-ink-500"> · {user.email}</span>
+                    <span className="text-ink-500"> · </span>
+                    <a
+                      href={`/users/${user.id}`}
+                      className="text-ink-600 underline-offset-4 hover:underline"
+                    >
+                      View
+                    </a>
+                    {user.disabledAt ? (
+                      <span className="ml-2 text-xs uppercase tracking-[0.2em] text-red-500">
+                        Disabled
+                      </span>
+                    ) : null}
                   </div>
                   <span className="text-xs uppercase tracking-[0.2em] text-ink-500">
                     {user.role}
@@ -421,6 +453,33 @@ export default async function AdminPage({ searchParams }: PageProps) {
               ))}
             </div>
           )}
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-ink-600">
+            <a
+              href={`/admin?page=${safePage}&showDisabled=${showDisabled ? "0" : "1"}`}
+              className="text-ink-500 hover:text-ink-700"
+            >
+              {showDisabled ? "Hide disabled" : "Show disabled"}
+            </a>
+            {totalPages > 1 ? (
+              <div className="flex items-center gap-4">
+                <a
+                  href={`/admin?page=${Math.max(1, safePage - 1)}&showDisabled=${showDisabled ? "1" : "0"}`}
+                  className={`${safePage === 1 ? "pointer-events-none opacity-50" : ""} text-ink-500 hover:text-ink-700`}
+                >
+                  Previous
+                </a>
+                <span>
+                  Page {safePage} of {totalPages}
+                </span>
+                <a
+                  href={`/admin?page=${Math.min(totalPages, safePage + 1)}&showDisabled=${showDisabled ? "1" : "0"}`}
+                  className={`${safePage >= totalPages ? "pointer-events-none opacity-50" : ""} text-ink-500 hover:text-ink-700`}
+                >
+                  Next
+                </a>
+              </div>
+            ) : null}
+          </div>
         </section>
 
         <section className="rounded-2xl border border-sand-200 bg-white/80 p-8 shadow-sm">

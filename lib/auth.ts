@@ -93,6 +93,11 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     return null;
   }
 
+  if (session.user.disabledAt) {
+    await clearSession();
+    return null;
+  }
+
   return session.user;
 }
 

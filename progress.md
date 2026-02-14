@@ -57,6 +57,7 @@
 - Simplified bid list columns for mobile screens.
 - Streamlined deploy script to pull, rebuild, and optionally bootstrap.
 - Added audit actor attribution for logged-in users.
+- Added user management with pagination and disable controls.
 
 ## Next Steps
 - Add lightweight validation errors on the form UI.
